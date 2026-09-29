@@ -1,319 +1,492 @@
 /* ==========================================================================
-   RESET E VARIÁVEIS GERAIS
+   1. IMPORTAÇÃO DE FONTES INDIE / RETRÔ
    ========================================================================== */
-:root {
-    --bg-dark: #050510;
-    --text-main: #e0e0e0;
-    --accent-blue: #3b82f6;
-    --accent-amber: #f59e0b;
-    --accent-green: #10b981;
-    --accent-red: #ef4444;
-    --card-bg: rgba(15, 20, 30, 0.85);
-}
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 
+/* ==========================================================================
+   2. RESET E CONFIGURAÇÕES GERAIS
+   ========================================================================== */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    /* O body fica travado para o fundo não mover. O scroll acontece nas telas. */
-    overflow: hidden; 
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; /* Mantido: O fundo CRT fica travado */
+    /* Fundo escuro levemente dessaturado, tom analógico */
+    background-color: #0b0f19;
+    color: #d1d5db;
+    font-family: 'Space Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 }
 
 /* ==========================================================================
-   EFEITOS DE FUNDO (RAIO E GRID)
+   3. EFEITO VINTAGE CRT / IMPERFEIÇÃO DA TELA
+   ========================================================================== */
+/* Linhas de scanline (simula monitor antigo/CRT) por cima de tudo */
+body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+    background-size: 100% 4px;
+    z-index: 20;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+/* Vignette (escurecimento nas bordas para ar analógico) */
+body::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.85);
+    z-index: 21;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   4. FUNDO DESENHADO / LINHAS DE ENERGIA IMPERFEITAS
    ========================================================================== */
 .grid-background {
-    position: fixed;
-    inset: 0;
-    background-image: 
-        linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 1;
-    pointer-events: none;
+    /* Grid estilo pixel/pontilhado em vez de vetores perfeitos */
+    background-image: 
+        radial-gradient(rgba(0, 200, 220, 0.15) 1px, transparent 0);
+    background-size: 24px 24px;
+    animation: driftGrid 12s linear infinite;
 }
 
-.lightning-flash {
-    position: fixed;
-    inset: 0;
-    background-color: #e0f2fe;
-    z-index: 5;
-    pointer-events: none;
-    
-    /* Estado padrão: invisível */
-    opacity: 0; 
-    transition: opacity 0.1s ease-out; /* Fade out natural quando o raio some */
+/* Pulso de oscilação imperfeita na tela */
+.grid-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(13, 148, 136, 0.08) 0%, rgba(11, 15, 25, 0.95) 80%);
+    animation: flickerLight 3s ease-in-out infinite alternate;
 }
 
-/* CORREÇÃO DO RAIO: Usando variável CSS em vez de style inline fixo */
-.lightning-flash.active {
-    opacity: var(--flash-max-opacity, 1);
-    transition: none; /* Corte seco na hora de acender */
+@keyframes driftGrid {
+    0% { background-position: 0 0; }
+    100% { background-position: 24px 24px; }
+}
+
+@keyframes flickerLight {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
 }
 
 /* ==========================================================================
-   SISTEMA DE TELAS (SPA) E CORREÇÃO DO FADE
+   5. FLASH DE RAIO LO-FI
+   ========================================================================== */
+.lightning-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(200, 230, 255, 0.2);
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.03s ease;
+}
+
+/* CORREÇÃO 1: Lê a variável do JS em vez de travar no "1" */
+.lightning-flash.active {
+    opacity: var(--flash-max-opacity, 1);
+}
+
+/* ==========================================================================
+   6. INTERFACE / CONTEÚDO (ESTILO INDIE)
+   ========================================================================== */
+.menu-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+/* --- Título e Subtítulo --- */
+.title-section {
+    margin-top: auto;
+    margin-bottom: 2rem;
+}
+
+.main-title {
+    font-family: 'VT323', monospace;
+    font-size: 4.5rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    color: #5eead4;
+    letter-spacing: 3px;
+    text-shadow: 
+        3px 3px 0px #0f766e,
+        -1px -1px 0px rgba(255,255,255,0.2);
+    animation: microGlitch 4s infinite;
+}
+
+.subtitle {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    margin-top: 0.8rem;
+    font-style: italic;
+}
+
+/* --- Botão Iniciar (Estilo pixel / artesanal) --- */
+.action-section {
+    margin-bottom: auto;
+    margin-top: 2rem;
+}
+
+.btn-start {
+    font-family: 'VT323', monospace;
+    font-size: 2.2rem;
+    color: #0b0f19;
+    background-color: #f59e0b;
+    border: none;
+    border-top: 4px solid #fde68a;
+    border-left: 4px solid #fde68a;
+    border-right: 4px solid #b45309;
+    border-bottom: 4px solid #b45309;
+    padding: 0.4rem 3rem;
+    cursor: pointer;
+    box-shadow: 0 6px 0px #78350f;
+    transition: all 0.1s ease;
+}
+
+.btn-start:hover {
+    background-color: #38bdf8;
+    border-top-color: #bae6fd;
+    border-left-color: #bae6fd;
+    border-right-color: #0284c7;
+    border-bottom-color: #0284c7;
+    box-shadow: 0 6px 0px #0369a1;
+    transform: translateY(-2px);
+}
+
+.btn-start:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0px #0369a1;
+}
+
+/* --- Créditos --- */
+.credits-section {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+@keyframes microGlitch {
+    0%, 100% { transform: translate(0, 0); }
+    94% { transform: translate(0, 0); }
+    95% { transform: translate(-2px, 1px); }
+    96% { transform: translate(2px, -1px); }
+    97% { transform: translate(0, 0); }
+}
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 3rem;
+    }
+    .subtitle {
+        font-size: 0.85rem;
+    }
+    .btn-start {
+        font-size: 1.8rem;
+        padding: 0.3rem 2rem;
+    }
+}
+
+/* ==========================================================================
+   7. SPA & TRANSIÇÃO DE TELAS
    ========================================================================== */
 .screen {
+    width: 100vw;
+    height: 100vh;
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
     z-index: 10;
-    
-    /* CORREÇÃO DO OVERFLOW: Permite scroll interno se a tela for pequena */
-    overflow-y: auto; 
-    overflow-x: hidden;
-    
-    /* CORREÇÃO DO FADE: Transição usando opacity e visibility, sem display: none */
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-    
     display: flex;
     flex-direction: column;
     padding: 2rem;
+    
+    /* CORREÇÃO 2: Permite scroll interno se a tela for estreita demais para o conteúdo */
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    /* CORREÇÃO 3: Prepara o terreno para o Fade in/out */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-.screen.hidden {
+.hidden {
+    /* CORREÇÃO 3: Retirado o 'display: none !important' para não matar a animação */
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
 }
 
 /* ==========================================================================
-   TELA 1 — MENU PRINCIPAL
+   8. TELA 2: PREPARAÇÃO - ESTRUTURA GERAL
    ========================================================================== */
-#screen-menu {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+#screen-preparation {
+    justify-content: flex-start;
+    padding: 2rem 4rem;
+    gap: 1.5rem;
 }
 
-.title-section {
-    margin-bottom: 3rem;
-}
-
-.main-title {
-    font-size: 3.5rem;
-    color: var(--accent-blue);
-    text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.subtitle {
-    font-size: 1.2rem;
-    color: #9ca3af;
-}
-
-.credits-section {
-    position: absolute;
-    bottom: 2rem;
-    font-size: 0.85rem;
-    color: #6b7280;
-}
-
-/* ==========================================================================
-   BOTÕES GERAIS
-   ========================================================================== */
-.btn-start {
-    background: transparent;
-    color: var(--accent-amber);
-    border: 2px solid var(--accent-amber);
-    padding: 1rem 3rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
-}
-
-.btn-start:hover {
-    background: var(--accent-amber);
-    color: var(--bg-dark);
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-}
-
-/* ==========================================================================
-   TELA 2 — PREPARAÇÃO
-   ========================================================================== */
+/* Topo (Header) */
 .prep-header {
     text-align: center;
-    margin-bottom: 2rem;
+    height: 15%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .prep-title {
-    font-size: 2rem;
-    color: var(--accent-blue);
+    font-family: 'VT323', monospace;
+    font-size: 2.2rem;
+    color: #5eead4;
+    text-shadow: 2px 2px 0px #0f766e;
     margin-bottom: 0.5rem;
 }
 
 .budget-counter {
-    font-size: 1.2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    color: #f59e0b;
     font-weight: bold;
-    color: var(--accent-green);
-    background: rgba(16, 185, 129, 0.1);
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    border: 1px solid var(--accent-green);
+    text-shadow: 1px 1px 0px #78350f;
 }
 
+/* Corpo (Grade + Sidebar) */
 .prep-body {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
     gap: 2rem;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
+    flex-grow: 1;
+    height: 70%;
 }
 
-/* Grade Central */
+/* ==========================================================================
+   9. TELA 2: GRADE E CARTÕES DE ZONA
+   ========================================================================== */
 .zone-grid {
-    flex: 2;
+    flex: 3;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    align-content: start;
 }
 
 .zone-card {
-    background-color: var(--card-bg);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: rgba(11, 15, 25, 0.85);
+    border: 2px solid #475569;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 180px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+}
+
+.zone-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(94, 234, 212, 0.1);
 }
 
 .zone-name {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.zone-indicator {
+    width: 100%;
+    flex-grow: 1;
+    margin: 0.5rem 0;
+    background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #0f172a 5px, #0f172a 10px);
+    border: 1px solid #475569;
+    transition: all 0.3s ease;
 }
 
 .zone-level-label {
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    color: #9ca3af;
+    font-size: 0.8rem;
+    color: #d1d5db;
+    margin-bottom: 0.8rem;
 }
 
-/* Controles de Zona (+ e -) */
+/* Estilos de Botão Menores (Sensores) */
 .zone-controls {
     display: flex;
-    justify-content: center;
     gap: 0.5rem;
 }
 
 .btn-sensor {
-    background: #1f2937;
-    color: #fff;
-    border: none;
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
     width: 40px;
     height: 40px;
-    font-size: 1.2rem;
-    border-radius: 4px;
+    background-color: #f59e0b;
+    color: #0b0f19;
+    border: none;
+    border-top: 3px solid #fde68a;
+    border-left: 3px solid #fde68a;
+    border-right: 3px solid #b45309;
+    border-bottom: 3px solid #b45309;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: 0 4px 0px #78350f;
+    transition: all 0.1s ease;
 }
 
 .btn-sensor:hover:not(:disabled) {
-    background: var(--accent-blue);
+    background-color: #38bdf8;
+    border-top-color: #bae6fd;
+    border-left-color: #bae6fd;
+    border-right-color: #0284c7;
+    border-bottom-color: #0284c7;
+    box-shadow: 0 4px 0px #0369a1;
+    transform: translateY(-2px);
+}
+
+.btn-sensor:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0px #0369a1;
 }
 
 .btn-sensor:disabled {
-    opacity: 0.3;
+    opacity: 0.4;
     cursor: not-allowed;
+    background-color: #475569;
+    border-color: #334155;
+    box-shadow: 0 4px 0px #1e293b;
 }
 
-/* Cores Dinâmicas dos Cartões via data-level */
+/* Estados Visuais Dinâmicos (Aplicados via JS aos cartões) */
 .zone-card[data-level="1"] {
-    border-color: var(--accent-amber);
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.1);
+    border-color: #38bdf8;
 }
-.zone-card[data-level="2"] {
-    border-color: var(--accent-green);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+.zone-card[data-level="1"] .zone-indicator {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: #38bdf8;
+    box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
-/* Painel Lateral */
+.zone-card[data-level="2"] {
+    border-color: #5eead4;
+}
+.zone-card[data-level="2"] .zone-indicator {
+    background: rgba(94, 234, 212, 0.2);
+    border-color: #5eead4;
+    box-shadow: inset 0 0 15px rgba(94, 234, 212, 0.5);
+    animation: pulseActiveSensor 2s infinite alternate;
+}
+
+@keyframes pulseActiveSensor {
+    from { opacity: 0.8; box-shadow: inset 0 0 10px rgba(94, 234, 212, 0.4); }
+    to { opacity: 1; box-shadow: inset 0 0 25px rgba(94, 234, 212, 0.8); }
+}
+
+/* ==========================================================================
+   10. TELA 2: PAINEL LATERAL (SIDEBAR)
+   ========================================================================== */
 .prep-sidebar {
     flex: 1;
-    min-width: 300px;
-    background-color: var(--card-bg);
-    border: 1px solid #333;
-    border-radius: 8px;
+    min-width: 250px;
+    background: rgba(94, 234, 212, 0.05);
+    border: 1px solid #5eead4;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
 }
 
 .sidebar-intro {
-    font-size: 0.9rem;
-    color: #9ca3af;
-    margin-bottom: 1.5rem;
-    font-style: italic;
-    border-bottom: 1px solid #333;
-    padding-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.4;
 }
 
 .sidebar-status-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.8rem;
 }
 
 .sidebar-status-item {
-    font-size: 0.9rem;
-    color: #6b7280; /* Cor de sem sensor */
+    font-size: 0.75rem;
+    color: #475569;
     transition: color 0.3s;
 }
 
-.sidebar-status-item.level-1 {
-    color: var(--accent-amber);
-}
+.sidebar-status-item.level-1 { color: #38bdf8; }
+.sidebar-status-item.level-2 { color: #5eead4; }
 
-.sidebar-status-item.level-2 {
-    color: var(--accent-green);
-}
-
-/* Canto Inferior Direito */
+/* ==========================================================================
+   11. TELA 2: AÇÃO (CANTO INFERIOR DIREITO)
+   ========================================================================== */
 .prep-action {
-    width: 100%;
-    max-width: 1200px;
-    margin: 2rem auto 0;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 1rem;
+    margin-top: auto;
 }
 
 .budget-warning {
-    color: var(--accent-red);
-    font-weight: bold;
-    background: rgba(239, 68, 68, 0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    border: 1px solid var(--accent-red);
+    color: #f59e0b;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 0.4rem 1rem;
+    border: 1px solid #f59e0b;
     transition: opacity 0.3s ease;
 }
 
+/* Garante que o alerta saia totalmente do fluxo visual quando escondido no JS */
 .budget-warning.hidden {
-    display: none; /* Aqui o display: none faz sentido porque não tem transição de tela */
+    display: none;
 }
 
 /* ==========================================================================
-   TELA 3 — SIMULAÇÃO (Placeholder)
+   12. RESPONSIVIDADE (TELA ESTREITA)
    ========================================================================== */
-#screen-game {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+@media (max-width: 900px) {
+    #screen-preparation { padding: 1.5rem; }
+    .prep-body { flex-direction: column; }
+    .prep-sidebar { min-height: 200px; }
+    .zone-grid { grid-template-columns: repeat(2, 1fr); }
 }
