@@ -16,27 +16,154 @@
     <!-- Camada para o fundo animado com linhas de energia -->
     <div class="grid-background"></div>
 
-    <!-- Container principal centralizado -->
-    <main class="menu-container">
-        
-        <!-- Bloco do Título e Subtítulo (Centro da tela) -->
-        <header class="title-section">
-            <h1 class="main-title">GridTwin: Blackout Protocol</h1>
-            <p class="subtitle">Controle o Gêmeo Digital. Preveja. Sobreviva.</p>
-        </header>
+    <!-- ======================================================================
+         TELA 1 — MENU
+         ====================================================================== -->
+    <section id="screen-menu" class="screen">
+        <!-- Container principal centralizado -->
+        <main class="menu-container">
+            
+            <!-- Bloco do Título e Subtítulo (Centro da tela) -->
+            <header class="title-section">
+                <h1 class="main-title">GridTwin: Blackout Protocol</h1>
+                <p class="subtitle">Controle o Gêmeo Digital. Preveja. Sobreviva.</p>
+            </header>
 
-        <!-- Botão de Ação (Centro-inferior) -->
-        <div class="action-section">
-            <button id="btn-start" class="btn-start">INICIAR</button>
-        </div>
+            <!-- Botão de Ação (Centro-inferior) -->
+            <div class="action-section">
+                <button id="btn-start" class="btn-start">INICIAR</button>
+            </div>
 
-        <!-- Créditos (Canto inferior) -->
-        <footer class="credits-section">
-            <p>Desenvolvido por: Seu Nome / Sua Equipe</p>
-            <p>Disciplina: Nome da Disciplina</p>
-        </footer>
+            <!-- Créditos (Canto inferior) -->
+            <footer class="credits-section">
+                <p>Desenvolvido por: Seu Nome / Sua Equipe</p>
+                <p>Disciplina: Nome da Disciplina</p>
+            </footer>
 
-    </main>
+        </main>
+    </section>
+
+    <!-- ======================================================================
+         TELA 2 — PREPARAÇÃO
+         Esta section fica escondida por padrão (classe "hidden") e é revelada
+         via JS (showScreen('screen-preparation')) quando o jogador clica em
+         "INICIAR" na Tela 1.
+         ====================================================================== -->
+    <section id="screen-preparation" class="screen hidden" aria-label="Tela de preparação da rede elétrica">
+
+      <!-- ============================== TOPO ============================== -->
+      <header class="prep-header">
+        <h2 class="prep-title">Alerta de Tempestade — Prepare sua Rede</h2>
+        <p class="budget-counter" aria-live="polite">
+          Orçamento: <span id="budget-remaining">8</span> / <span id="budget-total">8</span>
+        </p>
+      </header>
+
+      <!-- Container que agrupa a grade de zonas (centro) e o painel lateral,
+           lado a lado em telas largas e empilhado em telas estreitas -->
+      <div class="prep-body">
+
+        <!-- ============================== CENTRO ============================== -->
+        <!-- Grade com as 6 zonas da cidade. Cada .zone-card carrega
+             data-zone-id, usado pelo JS para saber qual zona foi clicada. -->
+        <div class="zone-grid" role="group" aria-label="Zonas da cidade">
+
+          <!-- Zona 1 -->
+          <div class="zone-card" data-zone-id="1" data-level="0">
+            <h3 class="zone-name">Zona 1 — Centro</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="1" aria-label="Remover sensor da Zona 1 — Centro">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="1" aria-label="Instalar sensor na Zona 1 — Centro">+</button>
+            </div>
+          </div>
+
+          <!-- Zona 2 -->
+          <div class="zone-card" data-zone-id="2" data-level="0">
+            <h3 class="zone-name">Zona 2 — Porto</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="2" aria-label="Remover sensor da Zona 2 — Porto">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="2" aria-label="Instalar sensor na Zona 2 — Porto">+</button>
+            </div>
+          </div>
+
+          <!-- Zona 3 -->
+          <div class="zone-card" data-zone-id="3" data-level="0">
+            <h3 class="zone-name">Zona 3 — Distrito Industrial</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="3" aria-label="Remover sensor da Zona 3 — Distrito Industrial">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="3" aria-label="Instalar sensor na Zona 3 — Distrito Industrial">+</button>
+            </div>
+          </div>
+
+          <!-- Zona 4 -->
+          <div class="zone-card" data-zone-id="4" data-level="0">
+            <h3 class="zone-name">Zona 4 — Residencial Norte</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="4" aria-label="Remover sensor da Zona 4 — Residencial Norte">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="4" aria-label="Instalar sensor na Zona 4 — Residencial Norte">+</button>
+            </div>
+          </div>
+
+          <!-- Zona 5 -->
+          <div class="zone-card" data-zone-id="5" data-level="0">
+            <h3 class="zone-name">Zona 5 — Hospital</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="5" aria-label="Remover sensor da Zona 5 — Hospital">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="5" aria-label="Instalar sensor na Zona 5 — Hospital">+</button>
+            </div>
+          </div>
+
+          <!-- Zona 6 -->
+          <div class="zone-card" data-zone-id="6" data-level="0">
+            <h3 class="zone-name">Zona 6 — Aeroporto</h3>
+            <div class="zone-indicator" aria-hidden="true"></div>
+            <p class="zone-level-label">Nível: <span class="level-value">0</span>/2</p>
+            <div class="zone-controls">
+              <button class="btn-sensor btn-decrease" data-zone-id="6" aria-label="Remover sensor da Zona 6 — Aeroporto">−</button>
+              <button class="btn-sensor btn-increase" data-zone-id="6" aria-label="Instalar sensor na Zona 6 — Aeroporto">+</button>
+            </div>
+          </div>
+
+        </div> <!-- fim .zone-grid -->
+
+        <!-- ============================== LATERAL DIREITA ============================== -->
+        <aside class="prep-sidebar" aria-label="Painel do Gêmeo Digital">
+          <p class="sidebar-intro">
+            O Gêmeo Digital só prevê sobrecargas em zonas monitoradas. Zonas sem sensor ficam invisíveis para o sistema até que seja tarde demais.
+          </p>
+          <ul class="sidebar-status-list" aria-live="polite">
+            <li class="sidebar-status-item" data-zone-id="1">Zona 1 — Centro: SEM SENSOR — previsão indisponível</li>
+            <li class="sidebar-status-item" data-zone-id="2">Zona 2 — Porto: SEM SENSOR — previsão indisponível</li>
+            <li class="sidebar-status-item" data-zone-id="3">Zona 3 — Distrito Industrial: SEM SENSOR — previsão indisponível</li>
+            <li class="sidebar-status-item" data-zone-id="4">Zona 4 — Residencial Norte: SEM SENSOR — previsão indisponível</li>
+            <li class="sidebar-status-item" data-zone-id="5">Zona 5 — Hospital: SEM SENSOR — previsão indisponível</li>
+            <li class="sidebar-status-item" data-zone-id="6">Zona 6 — Aeroporto: SEM SENSOR — previsão indisponível</li>
+          </ul>
+        </aside>
+
+      </div> <!-- fim .prep-body -->
+
+      <!-- ============================== CANTO INFERIOR DIREITO ============================== -->
+      <div class="prep-action">
+        <p class="budget-warning hidden" id="budget-warning">
+          Orçamento não utilizado: <span id="unused-budget">0</span> pontos — tem certeza?
+        </p>
+        <button id="btn-start-storm" class="btn-start" aria-label="Começar a tempestade e avançar para a simulação">
+          COMEÇAR TEMPESTADE
+        </button>
+      </div>
+
+    </section>
 
     <!-- Elemento de áudio para a música de fundo em loop -->
     <audio id="bg-music" loop src="background-music.mp3"></audio>

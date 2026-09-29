@@ -225,3 +225,262 @@ body::after {
         padding: 0.3rem 2rem;
     }
 }
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   7. SPA & TRANSIÇÃO DE TELAS
+   ========================================================================== */
+.screen {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    transition: opacity 0.5s ease;
+}
+
+.hidden {
+    display: none !important;
+    opacity: 0;
+}
+
+/* ==========================================================================
+   8. TELA 2: PREPARAÇÃO - ESTRUTURA GERAL
+   ========================================================================== */
+#screen-preparation {
+    justify-content: flex-start;
+    padding: 2rem 4rem;
+    gap: 1.5rem;
+}
+
+/* Topo (Header) */
+.prep-header {
+    text-align: center;
+    height: 15%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.prep-title {
+    font-family: 'VT323', monospace;
+    font-size: 2.2rem;
+    color: #5eead4; /* Cyan destaque */
+    text-shadow: 2px 2px 0px #0f766e;
+    margin-bottom: 0.5rem;
+}
+
+.budget-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    color: #f59e0b; /* Âmbar */
+    font-weight: bold;
+    text-shadow: 1px 1px 0px #78350f;
+}
+
+/* Corpo (Grade + Sidebar) */
+.prep-body {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    flex-grow: 1;
+    height: 70%;
+}
+
+/* ==========================================================================
+   9. TELA 2: GRADE E CARTÕES DE ZONA
+   ========================================================================== */
+.zone-grid {
+    flex: 3;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    align-content: start;
+}
+
+.zone-card {
+    background: rgba(11, 15, 25, 0.85);
+    border: 2px solid #475569;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 180px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+}
+
+.zone-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(94, 234, 212, 0.1);
+}
+
+.zone-name {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.zone-indicator {
+    width: 100%;
+    flex-grow: 1;
+    margin: 0.5rem 0;
+    background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #0f172a 5px, #0f172a 10px);
+    border: 1px solid #475569;
+    transition: all 0.3s ease;
+}
+
+.zone-level-label {
+    font-size: 0.8rem;
+    color: #d1d5db;
+    margin-bottom: 0.8rem;
+}
+
+/* Estilos de Botão Menores (Sensores) */
+.zone-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sensor {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    background-color: #f59e0b;
+    color: #0b0f19;
+    border: none;
+    border-top: 3px solid #fde68a;
+    border-left: 3px solid #fde68a;
+    border-right: 3px solid #b45309;
+    border-bottom: 3px solid #b45309;
+    cursor: pointer;
+    box-shadow: 0 4px 0px #78350f;
+    transition: all 0.1s ease;
+}
+
+.btn-sensor:hover:not(:disabled) {
+    background-color: #38bdf8;
+    border-top-color: #bae6fd;
+    border-left-color: #bae6fd;
+    border-right-color: #0284c7;
+    border-bottom-color: #0284c7;
+    box-shadow: 0 4px 0px #0369a1;
+    transform: translateY(-2px);
+}
+
+.btn-sensor:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0px #0369a1;
+}
+
+.btn-sensor:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #475569;
+    border-color: #334155;
+    box-shadow: 0 4px 0px #1e293b;
+}
+
+/* Estados Visuais Dinâmicos (Aplicados via JS aos cartões) */
+.zone-card[data-level="1"] {
+    border-color: #38bdf8;
+}
+.zone-card[data-level="1"] .zone-indicator {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: #38bdf8;
+    box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.zone-card[data-level="2"] {
+    border-color: #5eead4;
+}
+.zone-card[data-level="2"] .zone-indicator {
+    background: rgba(94, 234, 212, 0.2);
+    border-color: #5eead4;
+    box-shadow: inset 0 0 15px rgba(94, 234, 212, 0.5);
+    animation: pulseActiveSensor 2s infinite alternate;
+}
+
+@keyframes pulseActiveSensor {
+    from { opacity: 0.8; box-shadow: inset 0 0 10px rgba(94, 234, 212, 0.4); }
+    to { opacity: 1; box-shadow: inset 0 0 25px rgba(94, 234, 212, 0.8); }
+}
+
+/* ==========================================================================
+   10. TELA 2: PAINEL LATERAL (SIDEBAR)
+   ========================================================================== */
+.prep-sidebar {
+    flex: 1;
+    min-width: 250px;
+    background: rgba(94, 234, 212, 0.05);
+    border: 1px solid #5eead4;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-intro {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.sidebar-status-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.sidebar-status-item {
+    font-size: 0.75rem;
+    color: #475569; /* Padrão (Sem Sensor) */
+    transition: color 0.3s;
+}
+
+.sidebar-status-item.level-1 { color: #38bdf8; } /* Azul hover */
+.sidebar-status-item.level-2 { color: #5eead4; } /* Cyan */
+
+/* ==========================================================================
+   11. TELA 2: AÇÃO (CANTO INFERIOR DIREITO)
+   ========================================================================== */
+.prep-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: auto;
+}
+
+.budget-warning {
+    color: #f59e0b;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 0.4rem 1rem;
+    border: 1px solid #f59e0b;
+}
+
+/* ==========================================================================
+   12. RESPONSIVIDADE (TELA ESTREITA)
+   ========================================================================== */
+@media (max-width: 900px) {
+    #screen-preparation { padding: 1.5rem; }
+    .prep-body { flex-direction: column; }
+    .prep-sidebar { min-height: 200px; }
+    .zone-grid { grid-template-columns: repeat(2, 1fr); }
+}
