@@ -57,15 +57,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', startAudio);
     document.addEventListener('keydown', startAudio);
 
-    // Sistema de tempestade adaptativo
+    // Sistema de tempestade adaptativo (CORRIGIDO: uso de variável CSS)
     function triggerLightning() {
         if (!lightningFlash) return;
 
         // Se estiver na tela de Preparação (2), os raios são mais fracos e espaçados
         const isPrepScreen = currentScreenId === 'screen-preparation';
         
+        // Em vez de forçar o estilo inline de opacity que fica preso, 
+        // injetamos uma variável CSS que só tem efeito enquanto a classe .active existir.
+        lightningFlash.style.setProperty('--flash-max-opacity', isPrepScreen ? '0.3' : '1');
         lightningFlash.classList.add('active');
-        lightningFlash.style.opacity = isPrepScreen ? "0.3" : "1"; // Flash fraco na Tela 2
         
         const flashDuration = Math.random() * (isPrepScreen ? 60 : 100) + 50;
 
@@ -102,25 +104,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Atualiza a interface de uma zona específica (Cartão e Painel Lateral)
     function renderZoneCards() {
-        // Atualizar cada cartão
         for (let zoneId = 1; zoneId <= 6; zoneId++) {
             const level = zoneLevels[zoneId];
             const card = document.querySelector(`.zone-card[data-zone-id="${zoneId}"]`);
             
-            // Atualiza nível visual (CSS trata cores baseado no atributo)
+            if (!card) continue; // Prevenção de erro caso o HTML mude
+
             card.setAttribute('data-level', level);
             card.querySelector('.level-value').textContent = level;
 
-            // Ativa/Desativa botões baseados no saldo e nível atual
             const btnIncrease = card.querySelector('.btn-increase');
             const btnDecrease = card.querySelector('.btn-decrease');
 
             const costToNext = upgradeCosts[level + 1];
             
-            // Desabilita [+] se nível já for 2 ou não tiver dinheiro para o próximo
             btnIncrease.disabled = (level >= 2) || (currentBudget < costToNext);
-            
-            // Desabilita [-] se já estiver no nível 0
             btnDecrease.disabled = (level <= 0);
         }
     }
@@ -132,7 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const zoneId = item.getAttribute('data-zone-id');
             const level = zoneLevels[zoneId];
             
-            // Textos retirados dos nomes originais do HTML para manter dinamicidade
             const zoneNames = ["", "Centro", "Porto", "Distrito Industrial", "Residencial Norte", "Hospital", "Aeroporto"];
             const baseText = `Zona ${zoneId} — ${zoneNames[zoneId]}:`;
             
@@ -171,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentLevel = zoneLevels[zoneId];
         if (currentLevel <= 0) return;
         
-        // Devolve os pontos referentes ao nível que está sendo removido
         const refund = upgradeCosts[currentLevel];
         currentBudget += refund;
         zoneLevels[zoneId]--;
@@ -181,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSidebarStatus();
     }
 
-    // Associa eventos de clique a todos os botões de controle de zona
+    // Associa eventos de clique aos botões de controle
     document.querySelectorAll('.btn-increase').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const zoneId = e.target.getAttribute('data-zone-id');
@@ -197,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ==========================================================================
-       4. INTERAÇÕES DE TRANSIÇÃO
+       4. INTERAÇÕES DE TRANSIÇÃO E BOTÕES (CORRIGIDOS)
        ========================================================================== */
        
     // Sair da Tela 1 para Tela 2
@@ -207,36 +203,44 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 btnStartMenu.style.transform = 'scale(1)';
                 showScreen('screen-preparation');
-                renderZoneCards(); // Garante inicialização visual dos botões
             }, 150);
         });
     }
 
-    // Sair da Tela 2 para Tela 3
+    // Sair da Tela 2 para Tela 3 (CORRIGIDO: timeout adicionado para igualar animação)
     let warningActive = false;
     if (btnStartStorm) {
         btnStartStorm.addEventListener('click', () => {
             btnStartStorm.style.transform = 'scale(0.95)';
-            setTimeout(() => btnStartStorm.style.transform = 'scale(1)', 150);
-
-            const warningEl = document.getElementById('budget-warning');
             
-            // Verifica se há orçamento sobrando e o aviso não foi ativado ainda
-            if (currentBudget > 0 && !warningActive) {
-                warningActive = true;
-                document.getElementById('unused-budget').textContent = currentBudget;
-                warningEl.classList.remove('hidden');
+            // Espera a animação do botão (150ms) antes de processar a lógica
+            setTimeout(() => {
+                btnStartStorm.style.transform = 'scale(1)';
                 
-                // O aviso some após 2.5s se não for clicado novamente
-                setTimeout(() => {
-                    warningActive = false;
+                const warningEl = document.getElementById('budget-warning');
+                
+                if (currentBudget > 0 && !warningActive) {
+                    warningActive = true;
+                    document.getElementById('unused-budget').textContent = currentBudget;
+                    warningEl.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        warningActive = false;
+                        warningEl.classList.add('hidden');
+                    }, 2500);
+                } else {
                     warningEl.classList.add('hidden');
-                }, 2500);
-            } else {
-                // Confirmação final ou orçamento zerado, vai para a Tela 3
-                warningEl.classList.add('hidden');
-                showScreen('screen-game');
-            }
+                    showScreen('screen-game');
+                }
+            }, 150);
         });
     }
+
+    /* ==========================================================================
+       5. INICIALIZAÇÃO DE SEGURANÇA (CORRIGIDO)
+       ========================================================================== */
+    // Garante que a interface nasça com o estado correto independentemente do HTML
+    renderZoneCards();
+    updateSidebarStatus();
+    updateBudgetDisplay();
 });
