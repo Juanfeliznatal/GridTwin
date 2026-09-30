@@ -4,11 +4,38 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM: Áudio e Efeitos Globais
     const bgMusic = document.getElementById('bg-music');
+    const rainThunder = document.getElementById('rain-thunder');
     const lightningFlash = document.getElementById('lightning-flash');
+    const startSound = document.getElementById('start-sound');
+
+    // Inicia a música assim que o jogador clicar em qualquer lugar da página pela primeira vez
+    document.body.addEventListener('click', () => {
+
+    // Ajuste de volume da música de fundo e efeitos sonoros (0.0 a 1.0)
+    bgMusic.volume = 0.3;
+    rainThunder.volume = 0.2;
+
+    bgMusic.play().catch(erro => {
+        console.log("O navegador bloqueou a reprodução automática:", erro);
+    });
+    rainThunder.play().catch(erro => {
+        console.log("Erro ao tocar a chuva:", erro);
+    });
+    }, { once: true });
     
     // DOM: Botões de navegação
     const btnStartMenu = document.getElementById('btn-start');
     const btnStartStorm = document.getElementById('btn-start-storm');
+
+    // Efeito sonoro de clique no botão "Iniciar" (Tela 1)
+    btnStartMenu.addEventListener('click', (event) => {
+
+    startSound.volume = 0.4;
+    startSound.currentTime = 0; 
+
+    startSound.play();
+
+    });
 
     // Estado do Jogo (Tela 2)
     let currentScreenId = 'screen-menu';
