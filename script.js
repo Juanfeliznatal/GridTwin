@@ -2,40 +2,37 @@
    VARIÁVEIS DE ESTADO GLOBAL E DOM
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM: Áudio e Efeitos Globais
     const bgMusic = document.getElementById('bg-music');
     const lightningFlash = document.getElementById('lightning-flash');
-    
-    // DOM: Botões de navegação
     const btnStartMenu = document.getElementById('btn-start');
     const btnStartStorm = document.getElementById('btn-start-storm');
+    const btnRestart = document.getElementById('btn-restart');
+    const btnMenu = document.getElementById('btn-menu');
 
-    // Estado do Jogo (Tela 2)
     let currentScreenId = 'screen-menu';
     const MAX_BUDGET = 8;
     let currentBudget = MAX_BUDGET;
     
-    // CORREÇÃO: Utilizar window.zoneLevels para compartilhar o estado com o restante do sistema
     window.zoneLevels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-    
-    // Custos: 0->1 custa 1, 1->2 custa 2 (Total: 3 por zona max)
     const upgradeCosts = { 1: 1, 2: 2 }; 
 
     /* ==========================================================================
-       1. CONTROLE DE NAVEGAÇÃO SPA (Single Page Application)
+       1. CONTROLE DE NAVEGAÇÃO SPA
        ========================================================================== */
-    // CORREÇÃO: Anexar no window para que a função endGame possa acessá-la globalmente
     window.showScreen = function(screenId) {
-        // Ocultar todas las telas
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.add('hidden');
         });
         
-        // Mostrar a tela solicitada
         const targetScreen = document.getElementById(screenId);
         if (targetScreen) {
             targetScreen.classList.remove('hidden');
             currentScreenId = screenId;
+        }
+
+        // Hook para inicializar a Tela de Resultados
+        if (screenId === 'screen-result') {
+            renderResultScreen();
         }
     };
 
@@ -60,11 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', startAudio);
     document.addEventListener('keydown', startAudio);
 
-    // Sistema de tempestade adaptativo
     function triggerLightning() {
         if (!lightningFlash) return;
 
-        // Se estiver na tela de Preparação (2), os raios são mais fracos e espaçados
         const isPrepScreen = currentScreenId === 'screen-preparation';
         
         lightningFlash.style.setProperty('--flash-max-opacity', isPrepScreen ? '0.3' : '1');
@@ -85,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, flashDuration + 80);
         }
 
-        // Intervalo: Tela 1 (3 a 10s), Tela 2 (15 a 20s)
         const nextLightningIn = isPrepScreen 
             ? Math.random() * 5000 + 15000 
             : Math.random() * 7000 + 3000;
@@ -97,8 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ==========================================================================
        3. LÓGICA DA TELA 2: SISTEMA DE ORÇAMENTO E SENSORES
        ========================================================================== */
-       
-    // Atualiza o contador de orçamento no topo
     function updateBudgetDisplay() {
         const budgetRemainingEl = document.getElementById('budget-remaining');
         if (budgetRemainingEl) {
@@ -106,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Atualiza a interface de uma zona específica (Cartão e Painel Lateral)
     function renderZoneCards() {
         for (let zoneId = 1; zoneId <= 6; zoneId++) {
             const level = window.zoneLevels[zoneId];
@@ -128,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnIncrease) btnIncrease.disabled = (level >= 2) || (currentBudget < costToNext);
             if (btnDecrease) btnDecrease.disabled = (level <= 0);
 
-            // Atualiza barra visual indicadora (.zone-indicator)
             const indicator = card.querySelector('.zone-indicator');
             if (indicator) {
                 if (level === 0) {
@@ -145,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Atualiza os textos da barra lateral (Terminal do Gêmeo Digital)
     function updateSidebarStatus() {
         const listItems = document.querySelectorAll('.sidebar-status-item');
         listItems.forEach(item => {
@@ -174,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Função de Instalar/Melhorar Sensor
     function allocateSensor(zoneId) {
         const currentLevel = window.zoneLevels[zoneId];
         if (currentLevel >= 2) return;
@@ -190,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Função de Remover/Reduzir Sensor
     function deallocateSensor(zoneId) {
         const currentLevel = window.zoneLevels[zoneId];
         if (currentLevel <= 0) return;
@@ -204,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSidebarStatus();
     }
 
-    // Associa eventos de clique aos botões de controle
     document.querySelectorAll('.btn-increase').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const zoneId = e.target.getAttribute('data-zone-id');
@@ -222,8 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ==========================================================================
        4. INTERAÇÕES DE TRANSIÇÃO E BOTÕES
        ========================================================================== */
-       
-    // Sair da Tela 1 para Tela 2
     if (btnStartMenu) {
         btnStartMenu.addEventListener('click', () => {
             btnStartMenu.style.transform = 'scale(0.95)';
@@ -234,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Sair da Tela 2 para Tela 3
     let warningActive = false;
     if (btnStartStorm) {
         btnStartStorm.addEventListener('click', () => {
@@ -258,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     if (warningEl) warningEl.classList.add('hidden');
                     window.showScreen('screen-game');
-                    // CORREÇÃO: Efetivamente iniciar o jogo
                     if (typeof initScreen3 === 'function') {
                         initScreen3();
                     }
@@ -267,9 +249,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /* ==========================================================================
-       5. INICIALIZAÇÃO DE SEGURANÇA
-       ========================================================================== */
+    // Botões da Tela de Resultados (Tela 4)
+    if (btnRestart) {
+        btnRestart.addEventListener('click', () => {
+            currentBudget = MAX_BUDGET;
+            for (let z = 1; z <= 6; z++) {
+                window.zoneLevels[z] = 0;
+            }
+            renderZoneCards();
+            updateSidebarStatus();
+            updateBudgetDisplay();
+            window.showScreen('screen-preparation');
+        });
+    }
+
+    if (btnMenu) {
+        btnMenu.addEventListener('click', () => {
+            window.showScreen('screen-menu');
+        });
+    }
+
     renderZoneCards();
     updateSidebarStatus();
     updateBudgetDisplay();
@@ -277,15 +276,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ======================================================================
    TELA 3 — TEMPESTADE (GAMEPLAY)
-   Lógica de simulação em tempo real, estado da partida e interações
    ====================================================================== */
 
-// CORREÇÃO: Se pularem as telas, inicia zerado em vez de sobrescrever com hardcode
 if (typeof window.zoneLevels === 'undefined') {
   window.zoneLevels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
 }
 
-// Objeto de nomes das zonas para registros e logs
 const ZONE_NAMES = {
   1: "Zona 1 — Centro",
   2: "Zona 2 — Porto",
@@ -295,7 +291,6 @@ const ZONE_NAMES = {
   6: "Zona 6 — Aeroporto"
 };
 
-// Estado Global da Partida (Tela 3)
 const gameState = {
   timeRemaining: 120,
   score: 0,
@@ -313,6 +308,7 @@ const gameState = {
   blackoutSecondsLeft: {},
   cutCooldowns: {},
   sensorFailures: {},
+  sensorOffsets: {}, 
   recalibrations: [],
   pairCooldowns: {},
   gameInterval: null,
@@ -320,9 +316,6 @@ const gameState = {
   isGameOver: false
 };
 
-/**
- * Inicializa e inicia a simulação da Tela 3
- */
 function initScreen3() {
   gameState.timeRemaining = 120;
   gameState.score = 0;
@@ -336,6 +329,7 @@ function initScreen3() {
   gameState.recalibrations = [];
   gameState.cutCooldowns = {};
   gameState.sensorFailures = {};
+  gameState.sensorOffsets = {};
   gameState.pairCooldowns = {};
   gameState.isGameOver = false;
 
@@ -347,6 +341,7 @@ function initScreen3() {
     gameState.graceSecondsLeft[z] = 0;
     gameState.blackoutSecondsLeft[z] = 0;
     gameState.sensorFailures[z] = 0;
+    gameState.sensorOffsets[z] = 0;
   }
 
   document.getElementById('time-remaining').textContent = gameState.timeRemaining;
@@ -371,9 +366,6 @@ function initScreen3() {
   updateGameUI();
 }
 
-/**
- * Retorna os parâmetros da fase da tempestade baseados no tempo decorrido
- */
 function getCurrentPhase() {
   const elapsed = 120 - gameState.timeRemaining;
   if (elapsed < 40) {
@@ -385,9 +377,6 @@ function getCurrentPhase() {
   }
 }
 
-/**
- * Loop principal de simulação do jogo (Executado a cada 1 segundo)
- */
 function gameTick() {
   if (gameState.isGameOver) return;
 
@@ -397,6 +386,10 @@ function gameTick() {
   const currentPhase = getCurrentPhase();
 
   for (let z = 1; z <= 6; z++) {
+    if (gameState.timeRemaining % 2 === 0) {
+        gameState.sensorOffsets[z] = Math.floor(Math.random() * 7) - 3;
+    }
+
     if (gameState.status[z] === 'blackout') {
       gameState.blackoutSecondsLeft[z]--;
       if (gameState.blackoutSecondsLeft[z] <= 0) {
@@ -477,13 +470,12 @@ function gameTick() {
   updateGameUI();
 }
 
-/**
- * Atualiza todos os componentes gráficos da tela
- */
 function updateGameUI() {
   const currentPhase = getCurrentPhase();
   const predictionsList = document.getElementById('predictions-list');
   if (predictionsList) predictionsList.innerHTML = '';
+
+  const now = Date.now();
 
   for (let z = 1; z <= 6; z++) {
     const card = document.querySelector(`.game-zone-card[data-zone-id="${z}"]`);
@@ -491,24 +483,43 @@ function updateGameUI() {
 
     const currentLoad = Math.min(100, Math.max(0, gameState.loads[z]));
     const currentStatus = gameState.status[z];
+    const sensorLevel = window.zoneLevels[z] || 0;
+    const isBlind = sensorLevel === 0;
 
     card.setAttribute('data-status', currentStatus);
+    card.setAttribute('data-sensor-level', sensorLevel);
 
     const fillBar = card.querySelector('.zone-load-fill');
     if (fillBar) fillBar.style.width = `${currentLoad}%`;
 
     const loadValLabel = card.querySelector('.load-value');
-    if (loadValLabel) loadValLabel.textContent = Math.round(currentLoad);
+    if (loadValLabel) {
+      loadValLabel.textContent = isBlind ? "??" : Math.round(currentLoad); 
+    }
 
     const btnCut = card.querySelector('.btn-cut');
     const btnGen = card.querySelector('.btn-generator');
 
-    const now = Date.now();
     const cutOnCooldown = gameState.cutCooldowns[z] && gameState.cutCooldowns[z] > now;
 
+    // Atualização com indicador visual do tempo de recarga (Cooldown de 8s)
     if (btnCut) {
-      btnCut.disabled = gameState.isAttentionBusy || currentStatus === 'blackout' || cutOnCooldown;
+      if (!btnCut.hasAttribute('data-original-text')) {
+        btnCut.setAttribute('data-original-text', btnCut.textContent || 'Cortar Carga');
+      }
+
+      if (cutOnCooldown) {
+        const secondsLeft = Math.ceil((gameState.cutCooldowns[z] - now) / 1000);
+        btnCut.disabled = true;
+        btnCut.textContent = `Aguarde (${secondsLeft}s)`;
+        btnCut.classList.add('on-cooldown');
+      } else {
+        btnCut.disabled = gameState.isAttentionBusy || currentStatus === 'blackout';
+        btnCut.textContent = btnCut.getAttribute('data-original-text');
+        btnCut.classList.remove('on-cooldown');
+      }
     }
+
     if (btnGen) {
       btnGen.disabled = gameState.isAttentionBusy || currentStatus === 'blackout' || gameState.generatorUsesLeft <= 0;
     }
@@ -520,13 +531,12 @@ function updateGameUI() {
 
       const isUnderRecalibrationOrigin = gameState.recalibrations.some(r => r.origin === z);
       const isSensorFailing = gameState.sensorFailures[z] > 0;
-      const sensorLevel = window.zoneLevels[z] || 0;
 
-      if (currentStatus !== 'blackout' && !isUnderRecalibrationOrigin && !isSensorFailing && sensorLevel > 0) {
+      if (currentStatus !== 'blackout' && !isUnderRecalibrationOrigin && !isSensorFailing && !isBlind) {
         let timeToOverload = Math.ceil((100 - currentLoad) / currentPhase.growth);
 
         if (sensorLevel === 1 && currentLoad >= 70) {
-          const impreciseTime = Math.max(1, timeToOverload + (z % 2 === 0 ? 2 : -2));
+          const impreciseTime = Math.max(1, timeToOverload + gameState.sensorOffsets[z]);
           predEl.textContent = `Sobrecarga em ~${impreciseTime}s`;
           addPredictionSidebar(z, `Sobrecarga em ~${impreciseTime}s (Impreciso)`);
         } else if (sensorLevel === 2 && currentLoad >= 50) {
@@ -547,9 +557,6 @@ function updateGameUI() {
   if (generatorUsesEl) generatorUsesEl.textContent = gameState.generatorUsesLeft;
 }
 
-/**
- * Adiciona uma previsão ativa no painel da barra lateral
- */
 function addPredictionSidebar(zoneId, text, isExact = false) {
   const list = document.getElementById('predictions-list');
   if (!list) return;
@@ -560,9 +567,6 @@ function addPredictionSidebar(zoneId, text, isExact = false) {
   list.appendChild(li);
 }
 
-/**
- * Ativa o Cooldown de Atenção Dividida (2 segundos bloqueado)
- */
 function triggerAttentionCooldown() {
   gameState.isAttentionBusy = true;
   const cooldownContainer = document.getElementById('attention-cooldown');
@@ -591,18 +595,12 @@ function triggerAttentionCooldown() {
   }
 }
 
-/**
- * Adiciona pontos ao placar e atualiza a interface
- */
 function addScore(points) {
   gameState.score += points;
   const scoreValueEl = document.getElementById('score-value');
   if (scoreValueEl) scoreValueEl.textContent = gameState.score;
 }
 
-/**
- * Registra eventos no feed de logs em tempo real
- */
 function logEvent(msg, type = '') {
   const feed = document.getElementById('events-feed');
   if (!feed) return;
@@ -614,9 +612,6 @@ function logEvent(msg, type = '') {
   feed.insertBefore(li, feed.firstChild);
 }
 
-/**
- * Agendamento de Eventos Aleatórios (Raios e Falhas)
- */
 function scheduleNextRandomEvent() {
   if (gameState.isGameOver) return;
 
@@ -629,9 +624,6 @@ function scheduleNextRandomEvent() {
   }, delaySec * 1000);
 }
 
-/**
- * Sorteia e executa um evento aleatório
- */
 function executeRandomEvent() {
   if (gameState.isGameOver) return;
 
@@ -669,10 +661,19 @@ function executeRandomEvent() {
   }
 }
 
-/**
- * Manipulação de interações e clique do jogador
- */
+let isEventListenersSetup = false;
 function setupGameEventListeners() {
+  // Atalho por teclado: ESC cancela a seleção ativa
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      if (gameState.pendingAction) {
+        cancelSelectionMode();
+        logEvent("ℹ Seleção cancelada pelo utilizador.", "event-info");
+      }
+    }
+  });
+
+  if (isEventListenersSetup) return;
   const gameSection = document.getElementById('screen-game');
   if (!gameSection) return;
 
@@ -706,71 +707,74 @@ function setupGameEventListeners() {
   if (btnRedirect) {
     btnRedirect.addEventListener('click', () => {
       if (gameState.isAttentionBusy) return;
-      startSelectionMode('redirect-origin', "Selecione a zona de ORIGEM da carga...");
+      startSelectionMode('redirect-origin', "Selecione a zona de ORIGEM da carga (pressione ESC para cancelar)...");
     });
   }
 
   if (btnRecalibrate) {
     btnRecalibrate.addEventListener('click', () => {
       if (gameState.isAttentionBusy) return;
-      startSelectionMode('recalibrate-origin', "Selecione a zona com sensor para mover...");
+      startSelectionMode('recalibrate-origin', "Selecione a zona com sensor para mover (pressione ESC para cancelar)...");
     });
   }
+
+  isEventListenersSetup = true;
 }
 
-/**
- * Ação 1: Corte de Carga (-15)
- */
 function executeCutAction(zoneId) {
   if (gameState.status[zoneId] === 'blackout') return;
 
-  const wasCritical = gameState.status[zoneId] === 'critical' || gameState.loads[zoneId] >= 100;
-  gameState.loads[zoneId] = Math.max(0, gameState.loads[zoneId] - 15);
-  gameState.cutCooldowns[zoneId] = Date.now() + 5000;
+  const currentLoad = gameState.loads[zoneId];
+  const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
+  const wasRisky = currentLoad >= 70 && !wasCritical;
+
+  gameState.loads[zoneId] = Math.max(0, currentLoad - 10);
+  gameState.cutCooldowns[zoneId] = Date.now() + 8000;
 
   gameState.totalActionsCount++;
+  
   if (wasCritical) {
     addScore(10);
-  } else {
+  } else if (wasRisky) {
     addScore(50);
     gameState.preventiveActionsCount++;
   }
 
-  logEvent(`✂ Corte de carga executado na ${ZONE_NAMES[zoneId]} (-15).`);
+  if (wasCritical || wasRisky) {
+    logEvent(`✂ Corte de carga executado na ${ZONE_NAMES[zoneId]} (-10).`);
+  } else {
+    logEvent(`ℹ Corte prematuro na ${ZONE_NAMES[zoneId]} não gerou pontos.`, 'event-info');
+  }
   
-  // CORREÇÃO: Atualizar UI antes de trigar o delay de UI block
   updateGameUI();
   triggerAttentionCooldown();
 }
 
-/**
- * Ação 2: Gerador de Emergência (Reseta carga)
- */
 function executeGeneratorAction(zoneId) {
   if (gameState.status[zoneId] === 'blackout' || gameState.generatorUsesLeft <= 0) return;
 
-  const wasCritical = gameState.status[zoneId] === 'critical' || gameState.loads[zoneId] >= 100;
+  const currentLoad = gameState.loads[zoneId];
+  const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
+  const wasRisky = currentLoad >= 70 && !wasCritical;
+
   gameState.generatorUsesLeft--;
   gameState.loads[zoneId] = gameState.initialLoads[zoneId];
 
   gameState.totalActionsCount++;
+  
   if (wasCritical) {
     addScore(10);
-  } else {
+  } else if (wasRisky) {
     addScore(50);
     gameState.preventiveActionsCount++;
   }
 
   logEvent(`⚡ Gerador de emergência acionado na ${ZONE_NAMES[zoneId]}!`);
   
-  // CORREÇÃO: Atualizar UI antes de trigar o delay de UI block
   updateGameUI();
   triggerAttentionCooldown();
 }
 
-/**
- * Inicia modo de seleção para ações de duas zonas
- */
 function startSelectionMode(actionType, hintMessage) {
   gameState.pendingAction = actionType;
   gameState.selectedOriginId = null;
@@ -784,9 +788,6 @@ function startSelectionMode(actionType, hintMessage) {
   document.querySelectorAll('.game-zone-card').forEach(c => c.classList.remove('selected-target'));
 }
 
-/**
- * Trata os passos de seleção do clique nas zonas
- */
 function handleZoneSelection(zoneId) {
   const hintEl = document.getElementById('selection-hint');
 
@@ -810,19 +811,23 @@ function handleZoneSelection(zoneId) {
       return;
     }
 
-    const wasCritical = gameState.status[originId] === 'critical' || gameState.loads[originId] >= 100;
-    gameState.loads[originId] = Math.max(0, gameState.loads[originId] - 20);
-    gameState.loads[zoneId] = Math.min(100, gameState.loads[zoneId] + 10);
+    const currentLoad = gameState.loads[originId];
+    const wasCritical = gameState.status[originId] === 'critical' || currentLoad >= 100;
+    const wasRisky = currentLoad >= 70 && !wasCritical;
+
+    gameState.loads[originId] = Math.max(0, gameState.loads[originId] - 15);
+    gameState.loads[zoneId] = Math.min(100, gameState.loads[zoneId] + 15);
 
     gameState.totalActionsCount++;
+    
     if (wasCritical) {
       addScore(10);
-    } else {
+    } else if (wasRisky) {
       addScore(50);
       gameState.preventiveActionsCount++;
     }
 
-    logEvent(`↔ Redirecionamento: ${ZONE_NAMES[originId]} (-20) ➔ ${ZONE_NAMES[zoneId]} (+10).`);
+    logEvent(`↔ Redirecionamento: ${ZONE_NAMES[originId]} (-15) ➔ ${ZONE_NAMES[zoneId]} (+15).`);
     cancelSelectionMode();
     triggerAttentionCooldown();
   } else if (gameState.pendingAction === 'recalibrate-origin') {
@@ -857,9 +862,6 @@ function handleZoneSelection(zoneId) {
   }
 }
 
-/**
- * Cancela o modo de seleção visual
- */
 function cancelSelectionMode() {
   gameState.pendingAction = null;
   gameState.selectedOriginId = null;
@@ -870,9 +872,6 @@ function cancelSelectionMode() {
   document.querySelectorAll('.game-zone-card').forEach(c => c.classList.remove('selected-target'));
 }
 
-/**
- * Encerra a partida (Vitória ou Derrota) e calcula resultado final
- */
 function endGame(isVictory) {
   gameState.isGameOver = true;
   if (gameState.gameInterval) clearInterval(gameState.gameInterval);
@@ -899,21 +898,42 @@ function endGame(isVictory) {
     blackoutsOccurred: gameState.blackoutCount
   };
 
-  // CORREÇÃO: Atualizar os títulos na UI antes de mostrar a tela
   if (typeof window.showScreen === 'function') {
     setTimeout(() => {
-      const resultTitle = document.getElementById('result-title');
-      const resultSubtitle = document.getElementById('result-subtitle');
-      
-      if (resultTitle) {
-          resultTitle.textContent = isVictory ? "SOBREVIVÊNCIA ALCANÇADA" : "COLAPSO DO SISTEMA";
-          resultTitle.style.color = isVictory ? "#5eead4" : "#f59e0b";
-      }
-      if (resultSubtitle) {
-          resultSubtitle.textContent = `Pontuação: ${gameState.score} | Zonas perdidas: ${gameState.blackoutCount}`;
-      }
-      
       window.showScreen('screen-result');
-    }, 2500);
+    }, 2000);
   }
+}
+
+/* ======================================================================
+   TELA 4 — RESULTADOS (DEBRIEFING PEDAGÓGICO)
+   ====================================================================== */
+function renderResultScreen() {
+  const res = window.lastGameResult;
+  if (!res) return;
+
+  const resultTitle = document.getElementById('result-title');
+  const resultSubtitle = document.getElementById('result-subtitle');
+  const scoreVal = document.getElementById('result-score-val');
+  const bonusVal = document.getElementById('result-bonus-val');
+  const preventivePctVal = document.getElementById('result-preventive-pct');
+  const timeSurvivedVal = document.getElementById('result-time-survived');
+  const blackoutsVal = document.getElementById('result-blackouts-val');
+
+  if (resultTitle) {
+    resultTitle.textContent = res.victory ? "SOBREVIVÊNCIA ALCANÇADA" : "COLAPSO DO SISTEMA";
+    resultTitle.style.color = res.victory ? "#5eead4" : "#f59e0b";
+  }
+
+  if (resultSubtitle) {
+    resultSubtitle.textContent = res.victory 
+      ? "A infraestrutura resistiu à tempestade graças às suas decisões estratégicas e antecipação de falhas."
+      : "Múltiplas zonas sofreram apagão simultâneo, gerando colapso na rede elétrica da cidade.";
+  }
+
+  if (scoreVal) scoreVal.textContent = res.finalScore;
+  if (bonusVal) bonusVal.textContent = `+${res.bonusPoints} pts`;
+  if (preventivePctVal) preventivePctVal.textContent = `${res.preventivePct}%`;
+  if (timeSurvivedVal) timeSurvivedVal.textContent = `${res.timeSurvived}s`;
+  if (blackoutsVal) blackoutsVal.textContent = res.blackoutsOccurred;
 }
