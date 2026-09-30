@@ -239,7 +239,7 @@ body::after {
     display: flex;
     flex-direction: column;
     padding: 2rem;
-    overflow: hidden; /* Mantemos a tela inteira travada para não rolar acidentalmente */
+    overflow: hidden;
     opacity: 1;
     visibility: visible;
     transition: opacity 0.5s ease, visibility 0.5s ease;
@@ -285,6 +285,74 @@ ul.hidden {
     margin-bottom: 0.5rem;
 }
 
+/* ----------------------------------------------------------------------
+   SELETOR DE DIFICULDADE (ESTILOS CYBERPUNK)
+   ---------------------------------------------------------------------- */
+.difficulty-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0.5rem 0 0.8rem 0;
+    font-family: 'Space Mono', monospace;
+}
+
+.difficulty-selector label {
+    font-size: 0.85rem;
+    color: #88a0b0;
+    letter-spacing: 1.5px;
+    font-weight: bold;
+}
+
+/* Botão Base de Dificuldade */
+.btn-diff {
+    background: rgba(10, 20, 32, 0.8);
+    border: 1px solid #2a3d52;
+    color: #556b82;
+    padding: 6px 18px;
+    font-family: 'VT323', monospace;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    outline: none;
+}
+
+/* Hover nos botões de dificuldade */
+.btn-diff:hover {
+    border-color: #00ffcc;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+}
+
+/* Indicador visual comum no botão selecionado */
+.btn-diff.active::before {
+    content: "► ";
+    font-size: 0.85em;
+}
+
+/* Modo MÉDIO Selecionado (Amarelo/Laranja Néon) */
+.btn-diff[data-diff="medium"].active {
+    background: #ffaa00;
+    border-color: #ffc800;
+    color: #050b14;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(255, 170, 0, 0.6);
+    transform: scale(1.05);
+}
+
+/* Modo DIFÍCIL Selecionado (Vermelho/Rosa Néon com Alerta) */
+.btn-diff[data-diff="hard"].active {
+    background: #ff0055;
+    border-color: #ff3377;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 0 18px rgba(255, 0, 85, 0.8);
+    transform: scale(1.05);
+    animation: pulse-hard 2s infinite alternate;
+}
+
 .budget-counter {
     font-family: 'Space Mono', monospace;
     font-size: 1.5rem;
@@ -298,7 +366,7 @@ ul.hidden {
     flex-direction: row;
     gap: 2rem;
     flex-grow: 1;
-    min-height: 0; /* Essencial para que o flex filho possa calcular o scroll corretamente */
+    min-height: 0;
 }
 
 /* ==========================================================================
@@ -310,7 +378,7 @@ ul.hidden {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1.5rem;
     align-content: start;
-    overflow-y: auto; /* Permite rolar os cartões se a tela for pequena demais */
+    overflow-y: auto;
     padding-right: 10px;
 }
 
@@ -439,19 +507,17 @@ ul.hidden {
    10. TELA 2: PAINEL LATERAL (CORREÇÃO DE OVERFLOW E INFORMATIVOS)
    ========================================================================== */
 .prep-sidebar {
-    width: 400px; /* Largura ajustada para caber mais informação */
-    flex-shrink: 0; /* Impede de amassar horizontalmente */
+    width: 400px;
+    flex-shrink: 0;
     background-color: rgba(0, 10, 20, 0.8); 
     border: 1px solid #475569;
     padding: 1.5rem; 
     display: flex;
     flex-direction: column;
-    
-    /* BLOQUEIO DO VAZAMENTO E CRIAÇÃO DO SCROLL LOCAL */
-    max-height: 65vh; /* Ocupa apenas o espaço necessário da tela sem passar para baixo */
-    overflow-y: auto; /* Scroll APENAS aqui dentro */
-    overflow-x: hidden; /* Corta vazamentos para a direita */
-    word-wrap: break-word; /* Quebra palavras enormes */
+    max-height: 65vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
 }
 
 /* Scrollbar Customizado apenas para o Painel Lateral */
@@ -487,7 +553,6 @@ ul.hidden {
     text-align: justify;
 }
 
-/* Estilização para o novo Bloco Informativo de Mecânicas (Tesômetro, Raios, etc) */
 .mechanics-info {
     background: rgba(15, 23, 42, 0.6);
     border: 1px dashed #475569;
@@ -840,6 +905,11 @@ ul.hidden {
     100% { opacity: 1; }
 }
 
+@keyframes pulse-hard {
+    0% { box-shadow: 0 0 12px rgba(255, 0, 85, 0.6); }
+    100% { box-shadow: 0 0 22px rgba(255, 0, 85, 0.9); }
+}
+
 @keyframes fade-in-left {
     from {
         opacity: 0;
@@ -865,7 +935,7 @@ ul.hidden {
     .prep-sidebar,
     .game-sidebar { 
         min-height: 200px; 
-        max-height: 40vh; /* Em telas menores, a barra rola sem tomar tudo */
+        max-height: 40vh;
         width: 100%; 
     }
     .zone-grid { 

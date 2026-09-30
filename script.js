@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentBudget = MAX_BUDGET;
     
     window.zoneLevels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    window.selectedDifficulty = 'medium'; // Valor padrão
     const upgradeCosts = { 1: 1, 2: 2 }; 
 
     /* ==========================================================================
@@ -30,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentScreenId = screenId;
         }
 
-        // Hook para inicializar a Tela de Resultados
         if (screenId === 'screen-result') {
             renderResultScreen();
         }
@@ -123,13 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (indicator) {
                 if (level === 0) {
                     indicator.style.opacity = '0.3';
-                    indicator.style.border = '1px solid var(--border-color)';
+                    indicator.style.border = '1px solid var(--border-color, #475569)';
                 } else if (level === 1) {
                     indicator.style.opacity = '0.7';
-                    indicator.style.border = '1px solid var(--text-orange)';
+                    indicator.style.border = '1px solid #38bdf8';
                 } else if (level === 2) {
                     indicator.style.opacity = '1';
-                    indicator.style.border = '1px solid var(--text-cyan)';
+                    indicator.style.border = '1px solid #5eead4';
                 }
             }
         }
@@ -150,15 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 6: "Zona 6 — Aeroporto"
             };
             
+            item.classList.remove('level-1', 'level-2');
+
             if (level === 0) {
                 item.textContent = `${zoneNames[zoneId]}: SEM SENSOR — previsão indisponível`;
-                item.style.color = "#8ce6e6";
             } else if (level === 1) {
                 item.textContent = `${zoneNames[zoneId]}: SENSOR NÍVEL 1 — telemetria básica ativa`;
-                item.style.color = "var(--text-orange)";
+                item.classList.add('level-1');
             } else if (level === 2) {
                 item.textContent = `${zoneNames[zoneId]}: SENSOR NÍVEL 2 — monitoramento total em tempo real`;
-                item.style.color = "var(--text-cyan)";
+                item.classList.add('level-2');
             }
         });
     }
@@ -193,15 +194,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.btn-increase').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const zoneId = e.target.getAttribute('data-zone-id');
+            const zoneId = e.currentTarget.getAttribute('data-zone-id');
             allocateSensor(zoneId);
         });
     });
 
     document.querySelectorAll('.btn-decrease').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const zoneId = e.target.getAttribute('data-zone-id');
+            const zoneId = e.currentTarget.getAttribute('data-zone-id');
             deallocateSensor(zoneId);
+        });
+    });
+
+    // Seletor de Dificuldade Atualizado
+    document.querySelectorAll('.btn-diff').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetBtn = e.currentTarget;
+            document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            window.selectedDifficulty = targetBtn.getAttribute('data-diff') || 'medium';
         });
     });
 
@@ -249,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Botões da Tela de Resultados (Tela 4)
     if (btnRestart) {
         btnRestart.addEventListener('click', () => {
             currentBudget = MAX_BUDGET;
@@ -282,6 +292,25 @@ if (typeof window.zoneLevels === 'undefined') {
   window.zoneLevels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
 }
 
+window.selectedDifficulty = window.selectedDifficulty || 'medium';
+
+const DIFFICULTY_SETTINGS = {
+  medium: {
+    growthPhases: [1, 1.5, 2],       // Crescimento de carga mais suave
+    cutCooldownMs: 5000,              // 5 segundos de recarga no corte
+    generatorUses: 3,                // 3 geradores
+    gracePeriodSec: 10,              // 10s em alerta crítico antes do blackout
+    cutReduction: 15                 // Alívio de 15 de carga por corte
+  },
+  hard: {
+    growthPhases: [1, 2, 3],         // Crescimento acelerado
+    cutCooldownMs: 8000,              // 8 segundos de recarga no corte
+    generatorUses: 2,                // 2 geradores
+    gracePeriodSec: 8,               // 8s em alerta crítico antes do blackout
+    cutReduction: 10                 // Alívio de 10 de carga por corte
+  }
+};
+
 const ZONE_NAMES = {
   1: "Zona 1 — Centro",
   2: "Zona 2 — Porto",
@@ -295,7 +324,9 @@ const gameState = {
   timeRemaining: 120,
   score: 0,
   blackoutCount: 0,
-  generatorUsesLeft: 2,
+  generatorUsesLeft: 3,
+  difficulty: 'medium',
+  config: DIFFICULTY_SETTINGS.medium,
   isAttentionBusy: false,
   pendingAction: null,
   selectedOriginId: null,
@@ -317,10 +348,13 @@ const gameState = {
 };
 
 function initScreen3() {
+  gameState.difficulty = window.selectedDifficulty || 'medium';
+  gameState.config = DIFFICULTY_SETTINGS[gameState.difficulty];
+
   gameState.timeRemaining = 120;
   gameState.score = 0;
   gameState.blackoutCount = 0;
-  gameState.generatorUsesLeft = 2;
+  gameState.generatorUsesLeft = gameState.config.generatorUses;
   gameState.isAttentionBusy = false;
   gameState.pendingAction = null;
   gameState.selectedOriginId = null;
@@ -355,7 +389,8 @@ function initScreen3() {
   const predictionsList = document.getElementById('predictions-list');
   if (predictionsList) predictionsList.innerHTML = '';
 
-  logEvent("⚡ Tempestade iniciada! Monitoramento do Gêmeo Digital ativo.");
+  const diffLabel = gameState.difficulty === 'medium' ? 'Médio' : 'Difícil';
+  logEvent(`⚡ Tempestade iniciada (Modo: ${diffLabel})! Monitoramento do Gêmeo Digital ativo.`);
 
   setupGameEventListeners();
 
@@ -368,12 +403,14 @@ function initScreen3() {
 
 function getCurrentPhase() {
   const elapsed = 120 - gameState.timeRemaining;
+  const growths = gameState.config.growthPhases;
+
   if (elapsed < 40) {
-    return { phase: 1, name: "Calmaria", growth: 1, minEvent: 20, maxEvent: 30 };
+    return { phase: 1, name: "Calmaria", growth: growths[0], minEvent: 20, maxEvent: 30 };
   } else if (elapsed < 85) {
-    return { phase: 2, name: "Intensificação", growth: 2, minEvent: 10, maxEvent: 18 };
+    return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 10, maxEvent: 18 };
   } else {
-    return { phase: 3, name: "Olho da Tempestade", growth: 3, minEvent: 5, maxEvent: 10 };
+    return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 5, maxEvent: 10 };
   }
 }
 
@@ -405,8 +442,8 @@ function gameTick() {
       if (gameState.loads[z] >= 100) {
         if (gameState.status[z] !== 'critical') {
           gameState.status[z] = 'critical';
-          gameState.graceSecondsLeft[z] = 8;
-          logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Window de graça: 8s.`);
+          gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
+          logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
         } else {
           gameState.graceSecondsLeft[z]--;
           if (gameState.graceSecondsLeft[z] <= 0) {
@@ -502,7 +539,6 @@ function updateGameUI() {
 
     const cutOnCooldown = gameState.cutCooldowns[z] && gameState.cutCooldowns[z] > now;
 
-    // Atualização com indicador visual do tempo de recarga (Cooldown de 8s)
     if (btnCut) {
       if (!btnCut.hasAttribute('data-original-text')) {
         btnCut.setAttribute('data-original-text', btnCut.textContent || 'Cortar Carga');
@@ -663,7 +699,6 @@ function executeRandomEvent() {
 
 let isEventListenersSetup = false;
 function setupGameEventListeners() {
-  // Atalho por teclado: ESC cancela a seleção ativa
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' || e.key === 'Esc') {
       if (gameState.pendingAction) {
@@ -728,8 +763,8 @@ function executeCutAction(zoneId) {
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
 
-  gameState.loads[zoneId] = Math.max(0, currentLoad - 10);
-  gameState.cutCooldowns[zoneId] = Date.now() + 8000;
+  gameState.loads[zoneId] = Math.max(0, currentLoad - gameState.config.cutReduction);
+  gameState.cutCooldowns[zoneId] = Date.now() + gameState.config.cutCooldownMs;
 
   gameState.totalActionsCount++;
   
@@ -741,7 +776,7 @@ function executeCutAction(zoneId) {
   }
 
   if (wasCritical || wasRisky) {
-    logEvent(`✂ Corte de carga executado na ${ZONE_NAMES[zoneId]} (-10).`);
+    logEvent(`✂ Corte de carga executado na ${ZONE_NAMES[zoneId]} (-${gameState.config.cutReduction}).`);
   } else {
     logEvent(`ℹ Corte prematuro na ${ZONE_NAMES[zoneId]} não gerou pontos.`, 'event-info');
   }
@@ -891,6 +926,7 @@ function endGame(isVictory) {
 
   window.lastGameResult = {
     victory: isVictory,
+    difficulty: gameState.difficulty,
     finalScore: gameState.score,
     bonusPoints: bonus,
     preventivePct: gameState.totalActionsCount > 0 ? Math.round((gameState.preventiveActionsCount / gameState.totalActionsCount) * 100) : 0,
@@ -921,7 +957,8 @@ function renderResultScreen() {
   const blackoutsVal = document.getElementById('result-blackouts-val');
 
   if (resultTitle) {
-    resultTitle.textContent = res.victory ? "SOBREVIVÊNCIA ALCANÇADA" : "COLAPSO DO SISTEMA";
+    const diffText = res.difficulty === 'medium' ? 'Médio' : 'Difícil';
+    resultTitle.textContent = res.victory ? `SOBREVIVÊNCIA ALCANÇADA (${diffText.toUpperCase()})` : `COLAPSO DO SISTEMA (${diffText.toUpperCase()})`;
     resultTitle.style.color = res.victory ? "#5eead4" : "#f59e0b";
   }
 

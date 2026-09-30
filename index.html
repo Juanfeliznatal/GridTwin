@@ -44,11 +44,6 @@
                 <button id="btn-start" class="btn-start">INICIAR</button>
             </div>
 
-            <footer class="credits-section">
-                <p>Desenvolvido por: Juan Pablo / Equipe</p>
-                <p>Disciplina: Introdução à Programação / Projeto Gêmeo Digital</p>
-            </footer>
-
         </main>
     </section>
 
@@ -59,6 +54,14 @@
 
       <header class="prep-header">
         <h2 class="prep-title">Alerta de Tempestade — Prepare sua Rede</h2>
+        
+        <!-- Seletor de Dificuldade -->
+        <div class="difficulty-selector">
+          <label>DIFICULDADE:</label>
+          <button type="button" class="btn-diff active" data-diff="medium">MÉDIO</button>
+          <button type="button" class="btn-diff" data-diff="hard">DIFÍCIL</button>
+        </div>
+
         <p class="budget-counter" aria-live="polite">
           Orçamento: <span id="budget-remaining">8</span> / <span id="budget-total">8</span>
         </p>
@@ -149,13 +152,13 @@
             <div class="mechanics-info">
               <p><strong>Níveis de Monitoramento:</strong> Nível 1 fornece previsões imprecisas. Nível 2 fornece o tempo exato para o colapso da zona.</p>
               
-              <p><strong>Tesômetro (Barra de Carga):</strong> Indica a saturação energética da zona (0 a 100). Se atingir 100, a zona fica crítica e você terá apenas 8 segundos para agir antes de um apagão (Blackout).</p>
+              <p><strong>Tesômetro (Barra de Carga):</strong> Indica a saturação energética da zona (0 a 100). Se atingir 100, a zona fica crítica e você terá apenas alguns segundos para agir antes de um apagão (Blackout).</p>
               
               <p><strong>Raios e Eventos:</strong> A tempestade traz raios que causam picos maciços de carga (+30). Condições extremas também podem desativar sensores temporariamente.</p>
               
               <p><strong>Mecanismos de Resposta:</strong></p>
               <ul class="mechanics-list">
-                <li><em>Cortar Carga (✂):</em> Reduz instantaneamente 15 pontos de carga.</li>
+                <li><em>Cortar Carga (✂):</em> Reduz a carga instantaneamente.</li>
                 <li><em>Gerador (⚡):</em> Restaura a zona ao nível de carga seguro (uso limitado).</li>
                 <li><em>Redirecionar:</em> Transfere carga de uma zona crítica para uma mais folgada.</li>
                 <li><em>Recalibrar:</em> Reposiciona um sensor para outra zona (demora 10s).</li>
@@ -308,7 +311,7 @@
       <!-- Controladoria e Ações Globais -->
       <div class="prep-action game-action-panel">
         <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
-        <p class="generator-counter">Gerador de Emergência: <span id="generator-uses">2</span>/2 disponíveis</p>
+        <p class="generator-counter">Gerador de Emergência: <span id="generator-uses">3</span> disponíveis</p>
         <div class="game-action-buttons">
           <button id="btn-redirect" class="btn-sensor" data-action="redirect" aria-label="Redirecionar carga entre duas zonas">↔ Redirecionar</button>
           <button id="btn-recalibrate" class="btn-sensor" data-action="recalibrate" aria-label="Recalibrar sensor entre duas zonas">📡 Recalibrar</button>
