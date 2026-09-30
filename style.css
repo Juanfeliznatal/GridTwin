@@ -6,7 +6,9 @@
 /* ==========================================================================
    2. RESET E CONFIGURAÇÕES GERAIS
    ========================================================================== */
-* {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -15,8 +17,8 @@
 body {
     width: 100vw;
     height: 100vh;
-    overflow: hidden; /* Mantido: O fundo CRT fica travado */
-    /* Fundo escuro levemente dessaturado, tom analógico */
+    height: 100dvh;
+    overflow: hidden;
     background-color: #0b0f19;
     color: #d1d5db;
     font-family: 'Space Mono', monospace;
@@ -26,10 +28,24 @@ body {
     position: relative;
 }
 
+/* Customização de Scrollbars Globais */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #5eead4;
+}
+
 /* ==========================================================================
    3. EFEITO VINTAGE CRT / IMPERFEIÇÃO DA TELA
    ========================================================================== */
-/* Linhas de scanline (simula monitor antigo/CRT) por cima de tudo */
 body::before {
     content: " ";
     display: block;
@@ -42,7 +58,6 @@ body::before {
     opacity: 0.8;
 }
 
-/* Vignette (escurecimento nas bordas para ar analógico) */
 body::after {
     content: " ";
     position: absolute;
@@ -62,14 +77,11 @@ body::after {
     width: 100%;
     height: 100%;
     z-index: 1;
-    /* Grid estilo pixel/pontilhado em vez de vetores perfeitos */
-    background-image: 
-        radial-gradient(rgba(0, 200, 220, 0.15) 1px, transparent 0);
+    background-image: radial-gradient(rgba(0, 200, 220, 0.15) 1px, transparent 0);
     background-size: 24px 24px;
     animation: driftGrid 12s linear infinite;
 }
 
-/* Pulso de oscilação imperfeita na tela */
 .grid-background::after {
     content: '';
     position: absolute;
@@ -108,7 +120,6 @@ body::after {
     transition: opacity 0.03s ease;
 }
 
-/* CORREÇÃO 1: Lê a variável do JS em vez de travar no "1" */
 .lightning-flash.active {
     opacity: var(--flash-max-opacity, 1);
 }
@@ -129,7 +140,6 @@ body::after {
     text-align: center;
 }
 
-/* --- Título e Subtítulo --- */
 .title-section {
     margin-top: auto;
     margin-bottom: 2rem;
@@ -157,7 +167,6 @@ body::after {
     font-style: italic;
 }
 
-/* --- Botão Iniciar (Estilo pixel / artesanal) --- */
 .action-section {
     margin-bottom: auto;
     margin-top: 2rem;
@@ -176,7 +185,7 @@ body::after {
     padding: 0.4rem 3rem;
     cursor: pointer;
     box-shadow: 0 6px 0px #78350f;
-    transition: all 0.1s ease;
+    transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease, transform 0.1s ease;
 }
 
 .btn-start:hover {
@@ -194,7 +203,13 @@ body::after {
     box-shadow: 0 2px 0px #0369a1;
 }
 
-/* --- Créditos --- */
+.btn-start:focus-visible,
+.btn-sensor:focus-visible,
+.btn-action:focus-visible {
+    outline: 2px solid #5eead4;
+    outline-offset: 3px;
+}
+
 .credits-section {
     font-family: 'Space Mono', monospace;
     font-size: 0.75rem;
@@ -210,25 +225,13 @@ body::after {
     97% { transform: translate(0, 0); }
 }
 
-@media (max-width: 768px) {
-    .main-title {
-        font-size: 3rem;
-    }
-    .subtitle {
-        font-size: 0.85rem;
-    }
-    .btn-start {
-        font-size: 1.8rem;
-        padding: 0.3rem 2rem;
-    }
-}
-
 /* ==========================================================================
    7. SPA & TRANSIÇÃO DE TELAS
    ========================================================================== */
 .screen {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     position: absolute;
     top: 0;
     left: 0;
@@ -236,37 +239,38 @@ body::after {
     display: flex;
     flex-direction: column;
     padding: 2rem;
-    
-    /* CORREÇÃO 2: Permite scroll interno se a tela for estreita demais para o conteúdo */
-    overflow-y: auto;
-    overflow-x: hidden;
-    
-    /* CORREÇÃO 3: Prepara o terreno para o Fade in/out */
+    overflow: hidden; /* Mantemos a tela inteira travada para não rolar acidentalmente */
     opacity: 1;
     visibility: visible;
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-.hidden {
-    /* CORREÇÃO 3: Retirado o 'display: none !important' para não matar a animação */
+.screen.hidden {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
 }
 
+div.hidden,
+p.hidden,
+span.hidden,
+ul.hidden {
+    display: none !important;
+}
+
 /* ==========================================================================
-   8. TELA 2: PREPARAÇÃO - ESTRUTURA GERAL
+   8. ESTRUTURA COMPARTILHADA (TELAS 2 E 3)
    ========================================================================== */
-#screen-preparation {
+#screen-preparation,
+#screen-game {
     justify-content: flex-start;
     padding: 2rem 4rem;
     gap: 1.5rem;
 }
 
-/* Topo (Header) */
 .prep-header {
     text-align: center;
-    height: 15%;
+    min-height: 10%;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -289,13 +293,12 @@ body::after {
     text-shadow: 1px 1px 0px #78350f;
 }
 
-/* Corpo (Grade + Sidebar) */
 .prep-body {
     display: flex;
     flex-direction: row;
     gap: 2rem;
     flex-grow: 1;
-    height: 70%;
+    min-height: 0; /* Essencial para que o flex filho possa calcular o scroll corretamente */
 }
 
 /* ==========================================================================
@@ -307,7 +310,12 @@ body::after {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1.5rem;
     align-content: start;
+    overflow-y: auto; /* Permite rolar os cartões se a tela for pequena demais */
+    padding-right: 10px;
 }
+
+.zone-grid::-webkit-scrollbar { width: 4px; }
+.zone-grid::-webkit-scrollbar-thumb { background: #475569; }
 
 .zone-card {
     background: rgba(11, 15, 25, 0.85);
@@ -333,32 +341,40 @@ body::after {
     margin-bottom: 0.5rem;
 }
 
-.zone-indicator {
-    width: 100%;
-    flex-grow: 1;
-    margin: 0.5rem 0;
-    background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #0f172a 5px, #0f172a 10px);
-    border: 1px solid #475569;
-    transition: all 0.3s ease;
-}
-
 .zone-level-label {
     font-size: 0.8rem;
     color: #d1d5db;
     margin-bottom: 0.8rem;
 }
 
-/* Estilos de Botão Menores (Sensores) */
+.zone-indicator {
+    width: 100%;
+    height: 25px;
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #475569;
+    background: repeating-linear-gradient(-45deg, #1e293b, #1e293b 4px, transparent 4px, transparent 8px);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
 .zone-controls {
     display: flex;
     gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    padding: 0.8rem 0.5rem;
+    background-color: rgba(56, 189, 248, 0.05);
+    border-radius: 4px;
 }
 
 .btn-sensor {
     font-family: 'VT323', monospace;
-    font-size: 1.5rem;
-    width: 40px;
+    font-size: 1.6rem;
+    width: 45px;
     height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: #f59e0b;
     color: #0b0f19;
     border: none;
@@ -367,8 +383,8 @@ body::after {
     border-right: 3px solid #b45309;
     border-bottom: 3px solid #b45309;
     cursor: pointer;
-    box-shadow: 0 4px 0px #78350f;
-    transition: all 0.1s ease;
+    box-shadow: 0 4px 0px #78350f, inset 0 1px 2px rgba(255,255,255,0.5);
+    transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease, transform 0.1s ease;
 }
 
 .btn-sensor:hover:not(:disabled) {
@@ -377,7 +393,7 @@ body::after {
     border-left-color: #bae6fd;
     border-right-color: #0284c7;
     border-bottom-color: #0284c7;
-    box-shadow: 0 4px 0px #0369a1;
+    box-shadow: 0 4px 0px #0369a1, inset 0 1px 2px rgba(255,255,255,0.5);
     transform: translateY(-2px);
 }
 
@@ -394,7 +410,7 @@ body::after {
     box-shadow: 0 4px 0px #1e293b;
 }
 
-/* Estados Visuais Dinâmicos (Aplicados via JS aos cartões) */
+/* Estados Visuais Dinâmicos dos Cartões */
 .zone-card[data-level="1"] {
     border-color: #38bdf8;
 }
@@ -420,54 +436,144 @@ body::after {
 }
 
 /* ==========================================================================
-   10. TELA 2: PAINEL LATERAL (SIDEBAR)
+   10. TELA 2: PAINEL LATERAL (CORREÇÃO DE OVERFLOW E INFORMATIVOS)
    ========================================================================== */
 .prep-sidebar {
-    flex: 1;
-    min-width: 250px;
-    background: rgba(94, 234, 212, 0.05);
-    border: 1px solid #5eead4;
-    padding: 1.5rem;
+    width: 400px; /* Largura ajustada para caber mais informação */
+    flex-shrink: 0; /* Impede de amassar horizontalmente */
+    background-color: rgba(0, 10, 20, 0.8); 
+    border: 1px solid #475569;
+    padding: 1.5rem; 
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    
+    /* BLOQUEIO DO VAZAMENTO E CRIAÇÃO DO SCROLL LOCAL */
+    max-height: 65vh; /* Ocupa apenas o espaço necessário da tela sem passar para baixo */
+    overflow-y: auto; /* Scroll APENAS aqui dentro */
+    overflow-x: hidden; /* Corta vazamentos para a direita */
+    word-wrap: break-word; /* Quebra palavras enormes */
+}
+
+/* Scrollbar Customizado apenas para o Painel Lateral */
+.prep-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.prep-sidebar::-webkit-scrollbar-track {
+    background: rgba(11, 15, 25, 0.5);
+    border-radius: 4px;
+}
+.prep-sidebar::-webkit-scrollbar-thumb {
+    background: #38bdf8;
+    border-radius: 4px;
+}
+.prep-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #5eead4;
+}
+
+.sidebar-info-title {
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    color: #facc15;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #475569;
+    padding-bottom: 0.5rem;
 }
 
 .sidebar-intro {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #b3ffff;
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+/* Estilização para o novo Bloco Informativo de Mecânicas (Tesômetro, Raios, etc) */
+.mechanics-info {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed #475569;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.mechanics-info p {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin-bottom: 0.8rem;
+    line-height: 1.5;
+}
+
+.mechanics-info strong {
+    color: #f59e0b;
+}
+
+.mechanics-list {
+    margin-left: 1.5rem;
     font-size: 0.85rem;
     color: #94a3b8;
-    line-height: 1.4;
+    list-style-type: square;
+}
+
+.mechanics-list li {
+    margin-bottom: 0.5rem;
+}
+
+.mechanics-list em {
+    color: #5eead4;
+    font-style: normal;
+    font-weight: bold;
+}
+
+.sidebar-divider {
+    border: none;
+    border-top: 1px solid #475569;
+    margin: 1.5rem 0;
+}
+
+.sidebar-info-subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 1.5rem;
+    color: #38bdf8;
+    margin-bottom: 1rem;
 }
 
 .sidebar-status-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
 }
 
 .sidebar-status-item {
-    font-size: 0.75rem;
-    color: #475569;
-    transition: color 0.3s;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #8ce6e6;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #475569;
+    transition: color 0.3s ease;
+}
+
+.sidebar-status-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .sidebar-status-item.level-1 { color: #38bdf8; }
 .sidebar-status-item.level-2 { color: #5eead4; }
 
 /* ==========================================================================
-   11. TELA 2: AÇÃO (CANTO INFERIOR DIREITO)
+   11. TELA 2: AÇÃO INFERIOR
    ========================================================================== */
 .prep-action {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    margin-top: auto;
+    margin-top: 1rem;
 }
 
 .budget-warning {
     color: #f59e0b;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
     margin-bottom: 0.5rem;
     font-style: italic;
     background: rgba(245, 158, 11, 0.1);
@@ -476,17 +582,318 @@ body::after {
     transition: opacity 0.3s ease;
 }
 
-/* Garante que o alerta saia totalmente do fluxo visual quando escondido no JS */
-.budget-warning.hidden {
-    display: none;
+/* ==========================================================================
+   12. TELA 3 — TEMPESTADE (GAMEPLAY)
+   ========================================================================== */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #475569;
+    padding-bottom: 1rem;
+    font-family: 'VT323', monospace;
+    font-size: 1.8rem;
+    color: #5eead4;
+}
+
+.game-timer {
+    color: #38bdf8;
+    text-shadow: 0 0 5px #38bdf8;
+}
+
+.game-score {
+    color: #94a3b8;
+}
+
+.game-blackout-counter {
+    color: #94a3b8;
+    transition: color 0.3s ease;
+}
+
+.game-blackout-counter.danger {
+    color: #f59e0b;
+    animation: pulse-danger 1s infinite;
+}
+
+.game-zone-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, filter 0.3s ease, transform 0.2s ease;
+}
+
+.game-zone-card.selected-target {
+    border-color: #facc15;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+    transform: translateY(-2px);
+    cursor: crosshair;
+}
+
+.zone-load-bar {
+    width: 100%;
+    height: 12px;
+    background-color: #0b0f19;
+    border: 1px solid #475569;
+    margin: 1rem 0 0.5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.zone-load-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s linear, background-color 0.3s ease, box-shadow 0.3s ease;
+    background-color: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+.zone-load-label {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-align: right;
+    margin-bottom: 0.5rem;
+}
+
+.zone-prediction {
+    font-size: 0.95rem;
+    min-height: 1.5rem;
+    color: #5eead4;
+    margin-bottom: 1rem;
+}
+
+.zone-prediction.exact-prediction {
+    animation: pulse-cyan 1.5s infinite alternate;
+    font-weight: bold;
+}
+
+.game-zone-card[data-status="calm"] .zone-load-fill {
+    background-color: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+}
+
+.game-zone-card[data-status="alert"] .zone-load-fill {
+    background-color: #facc15;
+    box-shadow: 0 0 8px #facc15;
+}
+
+.game-zone-card[data-status="critical"] .zone-load-fill {
+    background-color: #f59e0b;
+    box-shadow: 0 0 12px #f59e0b;
+}
+
+.game-zone-card[data-status="blackout"] {
+    border-color: #475569;
+    opacity: 0.6;
+    filter: grayscale(0.8);
+}
+
+.game-zone-card[data-status="blackout"] .zone-load-fill {
+    background-color: #475569;
+    box-shadow: none;
+}
+
+.game-zone-card[data-status="blackout"] .zone-name {
+    color: #475569;
+    text-decoration: line-through;
+}
+
+.zone-quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.btn-action {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #475569;
+    color: #94a3b8;
+    padding: 0.4rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-action:hover:not(:disabled) {
+    border-color: #5eead4;
+    color: #5eead4;
+    background: rgba(94, 234, 212, 0.1);
+}
+
+.btn-action:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #475569;
+}
+
+.game-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar-subtitle {
+    font-family: 'VT323', monospace;
+    color: #38bdf8;
+    font-size: 1.5rem;
+    border-bottom: 1px solid #475569;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.predictions-list, 
+.events-feed {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    font-size: 0.9rem;
+}
+
+.predictions-list li {
+    color: #facc15;
+}
+
+.events-feed li {
+    color: #94a3b8;
+    border-left: 2px solid #475569;
+    padding-left: 0.5rem;
+    animation: fade-in-left 0.3s ease-out;
+}
+
+.events-feed li.event-lightning {
+    border-left-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.events-feed li.event-sensor {
+    border-left-color: #facc15;
+}
+
+.game-action-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    padding-top: 1rem;
+    border-top: 1px solid #475569;
+    width: 100%;
+}
+
+.selection-hint {
+    color: #facc15;
+    font-weight: bold;
+    font-size: 1.1rem;
+    animation: pulse-danger 1.5s infinite;
+}
+
+.generator-counter {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.game-action-buttons {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.attention-cooldown {
+    width: 100%;
+    max-width: 400px;
+    height: 6px;
+    background-color: #0b0f19;
+    border: 1px solid #475569;
+    margin-top: 0.5rem;
+    overflow: hidden;
+}
+
+.attention-cooldown-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #f59e0b;
 }
 
 /* ==========================================================================
-   12. RESPONSIVIDADE (TELA ESTREITA)
+   13. ANIMAÇÕES
+   ========================================================================== */
+@keyframes pulse-cyan {
+    0% { text-shadow: 0 0 2px #5eead4; opacity: 0.8; }
+    100% { text-shadow: 0 0 10px #5eead4; opacity: 1; }
+}
+
+@keyframes pulse-danger {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes fade-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ==========================================================================
+   14. RESPONSIVIDADE CONSOLIDADA (MEDIA QUERIES)
    ========================================================================== */
 @media (max-width: 900px) {
-    #screen-preparation { padding: 1.5rem; }
-    .prep-body { flex-direction: column; }
-    .prep-sidebar { min-height: 200px; }
-    .zone-grid { grid-template-columns: repeat(2, 1fr); }
+    #screen-preparation,
+    #screen-game { 
+        padding: 1.5rem; 
+    }
+    .prep-body { 
+        flex-direction: column; 
+    }
+    .prep-sidebar,
+    .game-sidebar { 
+        min-height: 200px; 
+        max-height: 40vh; /* Em telas menores, a barra rola sem tomar tudo */
+        width: 100%; 
+    }
+    .zone-grid { 
+        grid-template-columns: repeat(2, 1fr); 
+    }
+}
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 3rem;
+    }
+    .subtitle {
+        font-size: 0.85rem;
+    }
+    .btn-start {
+        font-size: 1.8rem;
+        padding: 0.3rem 2rem;
+    }
+    .game-header {
+        font-size: 1.4rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .game-action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    .game-action-buttons .btn-sensor {
+        width: 100%;
+    }
 }

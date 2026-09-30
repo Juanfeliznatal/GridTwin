@@ -5,10 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GridTwin: Blackout Protocol</title>
     
-    <!-- Link para o arquivo de estilos CSS (as fontes são importadas diretamente dentro dele) -->
+    <!-- Tipografia Retro Cyberpunk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+
+    <!-- Vínculo com CSS -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- Vínculo com JavaScript -->
+    <script src="script.js" defer></script>
 </head>
 <body>
+
+    <!-- Elemento de áudio para trilha sonora -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="assets/audio/ambient_theme.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- Camada para o efeito visual de flash de raio/tempestade -->
     <div id="lightning-flash" class="lightning-flash"></div>
@@ -17,38 +30,33 @@
     <div class="grid-background"></div>
 
     <!-- ======================================================================
-         TELA 1 — MENU
+         TELA 1 — MENU PRINCIPAL
          ====================================================================== -->
     <section id="screen-menu" class="screen">
-        <!-- Container principal centralizado -->
         <main class="menu-container">
             
-            <!-- Bloco do Título e Subtítulo (Centro da tela) -->
             <header class="title-section">
                 <h1 class="main-title">GridTwin: Blackout Protocol</h1>
                 <p class="subtitle">Controle o Gêmeo Digital. Preveja. Sobreviva.</p>
             </header>
 
-            <!-- Botão de Ação (Centro-inferior) -->
             <div class="action-section">
                 <button id="btn-start" class="btn-start">INICIAR</button>
             </div>
 
-            <!-- Créditos (Canto inferior) -->
             <footer class="credits-section">
-                <p>Desenvolvido por: Seu Nome / Sua Equipe</p>
-                <p>Disciplina: Nome da Disciplina</p>
+                <p>Desenvolvido por: Juan Pablo / Equipe</p>
+                <p>Disciplina: Introdução à Programação / Projeto Gêmeo Digital</p>
             </footer>
 
         </main>
     </section>
 
     <!-- ======================================================================
-         TELA 2 — PREPARAÇÃO
+         TELA 2 — PREPARAÇÃO E ALOCAÇÃO DE SENSORES
          ====================================================================== -->
     <section id="screen-preparation" class="screen hidden" aria-label="Tela de preparação da rede elétrica">
 
-      <!-- ============================== TOPO ============================== -->
       <header class="prep-header">
         <h2 class="prep-title">Alerta de Tempestade — Prepare sua Rede</h2>
         <p class="budget-counter" aria-live="polite">
@@ -56,10 +64,9 @@
         </p>
       </header>
 
-      <!-- Container que agrupa a grade de zonas (centro) e o painel lateral -->
       <div class="prep-body">
 
-        <!-- ============================== CENTRO ============================== -->
+        <!-- Grade com as 6 Zonas de Monitoramento -->
         <div class="zone-grid" role="group" aria-label="Zonas da cidade">
 
           <!-- Zona 1 -->
@@ -128,26 +135,49 @@
             </div>
           </div>
 
-        </div> <!-- fim .zone-grid -->
+        </div>
 
-        <!-- ============================== LATERAL DIREITA ============================== -->
-        <aside class="prep-sidebar" aria-label="Painel do Gêmeo Digital">
-          <p class="sidebar-intro">
-            O Gêmeo Digital só prevê sobrecargas em zonas monitoradas. Zonas sem sensor ficam invisíveis para o sistema até que seja tarde demais.
-          </p>
-          <ul class="sidebar-status-list" aria-live="polite">
-            <li class="sidebar-status-item" data-zone-id="1">Zona 1 — Centro: SEM SENSOR — previsão indisponível</li>
-            <li class="sidebar-status-item" data-zone-id="2">Zona 2 — Porto: SEM SENSOR — previsão indisponível</li>
-            <li class="sidebar-status-item" data-zone-id="3">Zona 3 — Distrito Industrial: SEM SENSOR — previsão indisponível</li>
-            <li class="sidebar-status-item" data-zone-id="4">Zona 4 — Residencial Norte: SEM SENSOR — previsão indisponível</li>
-            <li class="sidebar-status-item" data-zone-id="5">Zona 5 — Hospital: SEM SENSOR — previsão indisponível</li>
-            <li class="sidebar-status-item" data-zone-id="6">Zona 6 — Aeroporto: SEM SENSOR — previsão indisponível</li>
-          </ul>
+        <!-- Painel Lateral Telemétrico -->
+        <aside class="prep-sidebar prep-sidebar-scroll" aria-label="Painel do Gêmeo Digital">
+          <div class="sidebar-content-wrapper">
+            <h3 class="sidebar-info-title">Manual do Operador & Gêmeo Digital</h3>
+            
+            <p class="sidebar-intro">
+              <strong>O Gêmeo Digital:</strong> Uma réplica virtual da rede que detecta anomalias. O sistema só prevê sobrecargas em zonas ativamente monitoradas. Zonas "cegas" sofrem apagões repentinos.
+            </p>
+
+            <div class="mechanics-info">
+              <p><strong>Níveis de Monitoramento:</strong> Nível 1 fornece previsões imprecisas. Nível 2 fornece o tempo exato para o colapso da zona.</p>
+              
+              <p><strong>Tesômetro (Barra de Carga):</strong> Indica a saturação energética da zona (0 a 100). Se atingir 100, a zona fica crítica e você terá apenas 8 segundos para agir antes de um apagão (Blackout).</p>
+              
+              <p><strong>Raios e Eventos:</strong> A tempestade traz raios que causam picos maciços de carga (+30). Condições extremas também podem desativar sensores temporariamente.</p>
+              
+              <p><strong>Mecanismos de Resposta:</strong></p>
+              <ul class="mechanics-list">
+                <li><em>Cortar Carga (✂):</em> Reduz instantaneamente 15 pontos de carga.</li>
+                <li><em>Gerador (⚡):</em> Restaura a zona ao nível de carga seguro (uso limitado).</li>
+                <li><em>Redirecionar:</em> Transfere carga de uma zona crítica para uma mais folgada.</li>
+                <li><em>Recalibrar:</em> Reposiciona um sensor para outra zona (demora 10s).</li>
+              </ul>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <h4 class="sidebar-info-subtitle">Status de Monitoramento Atual</h4>
+            <ul class="sidebar-status-list" aria-live="polite">
+              <li class="sidebar-status-item" data-zone-id="1">Zona 1 — Centro: SEM SENSOR — previsão indisponível</li>
+              <li class="sidebar-status-item" data-zone-id="2">Zona 2 — Porto: SEM SENSOR — previsão indisponível</li>
+              <li class="sidebar-status-item" data-zone-id="3">Zona 3 — Distrito Industrial: SEM SENSOR — previsão indisponível</li>
+              <li class="sidebar-status-item" data-zone-id="4">Zona 4 — Residencial Norte: SEM SENSOR — previsão indisponível</li>
+              <li class="sidebar-status-item" data-zone-id="5">Zona 5 — Hospital: SEM SENSOR — previsão indisponível</li>
+              <li class="sidebar-status-item" data-zone-id="6">Zona 6 — Aeroporto: SEM SENSOR — previsão indisponível</li>
+            </ul>
+          </div>
         </aside>
 
-      </div> <!-- fim .prep-body -->
+      </div>
 
-      <!-- ============================== CANTO INFERIOR DIREITO ============================== -->
       <div class="prep-action">
         <p class="budget-warning hidden" id="budget-warning">
           Orçamento não utilizado: <span id="unused-budget">0</span> pontos — tem certeza?
@@ -160,19 +190,150 @@
     </section>
 
     <!-- ======================================================================
-         TELA 3 — SIMULAÇÃO (Em construção)
+         TELA 3 — TEMPESTADE (GAMEPLAY)
          ====================================================================== -->
-    <section id="screen-game" class="screen hidden">
-        <main class="menu-container">
-            <h1 class="main-title" style="color: #f59e0b;">TEMPESTADE INICIADA</h1>
-            <p class="subtitle">O blackout começou. Tela 3 em construção...</p>
-        </main>
+    <section id="screen-game" class="screen hidden" aria-label="Simulação em tempo real da rede elétrica durante a tempestade">
+
+      <header class="prep-header game-header">
+        <p class="game-timer" aria-live="polite">Tempo restante: <span id="time-remaining">120</span>s</p>
+        <p class="game-score" aria-live="polite">Pontuação: <span id="score-value">0</span></p>
+        <p class="game-blackout-counter" aria-live="assertive">Zonas apagadas: <span id="blackout-count">0</span>/6</p>
+      </header>
+
+      <div class="prep-body">
+
+        <!-- Grade de Zonas Ativas na Simulação -->
+        <div class="zone-grid" role="group" aria-label="Zonas da cidade durante a tempestade">
+
+          <!-- Zona 1 -->
+          <div class="zone-card game-zone-card" data-zone-id="1" data-status="calm">
+            <h3 class="zone-name">Zona 1 — Centro</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="1" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="1">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="1" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="1" data-action="cut" aria-label="Cortar carga da Zona 1 — Centro">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="1" data-action="generator" aria-label="Usar gerador de emergência na Zona 1 — Centro">⚡</button>
+            </div>
+          </div>
+
+          <!-- Zona 2 -->
+          <div class="zone-card game-zone-card" data-zone-id="2" data-status="calm">
+            <h3 class="zone-name">Zona 2 — Porto</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="2" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="2">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="2" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="2" data-action="cut" aria-label="Cortar carga da Zona 2 — Porto">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="2" data-action="generator" aria-label="Usar gerador de emergência na Zona 2 — Porto">⚡</button>
+            </div>
+          </div>
+
+          <!-- Zona 3 -->
+          <div class="zone-card game-zone-card" data-zone-id="3" data-status="calm">
+            <h3 class="zone-name">Zona 3 — Distrito Industrial</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="3" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="3">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="3" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="3" data-action="cut" aria-label="Cortar carga da Zona 3 — Distrito Industrial">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="3" data-action="generator" aria-label="Usar gerador de emergência na Zona 3 — Distrito Industrial">⚡</button>
+            </div>
+          </div>
+
+          <!-- Zona 4 -->
+          <div class="zone-card game-zone-card" data-zone-id="4" data-status="calm">
+            <h3 class="zone-name">Zona 4 — Residencial Norte</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="4" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="4">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="4" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="4" data-action="cut" aria-label="Cortar carga da Zona 4 — Residencial Norte">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="4" data-action="generator" aria-label="Usar gerador de emergência na Zona 4 — Residencial Norte">⚡</button>
+            </div>
+          </div>
+
+          <!-- Zona 5 -->
+          <div class="zone-card game-zone-card" data-zone-id="5" data-status="calm">
+            <h3 class="zone-name">Zona 5 — Hospital</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="5" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="5">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="5" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="5" data-action="cut" aria-label="Cortar carga da Zona 5 — Hospital">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="5" data-action="generator" aria-label="Usar gerador de emergência na Zona 5 — Hospital">⚡</button>
+            </div>
+          </div>
+
+          <!-- Zona 6 -->
+          <div class="zone-card game-zone-card" data-zone-id="6" data-status="calm">
+            <h3 class="zone-name">Zona 6 — Aeroporto</h3>
+            <div class="zone-load-bar" aria-hidden="true">
+              <div class="zone-load-fill" data-zone-id="6" style="width: 20%;"></div>
+            </div>
+            <p class="zone-load-label">Carga: <span class="load-value" data-zone-id="6">20</span>/100</p>
+            <p class="zone-prediction" data-zone-id="6" aria-live="polite"></p>
+            <div class="zone-quick-actions">
+              <button class="btn-action btn-cut" data-zone-id="6" data-action="cut" aria-label="Cortar carga da Zona 6 — Aeroporto">✂</button>
+              <button class="btn-action btn-generator" data-zone-id="6" data-action="generator" aria-label="Usar gerador de emergência na Zona 6 — Aeroporto">⚡</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Lateral de Eventos e Previsões Preditivas -->
+        <aside class="prep-sidebar game-sidebar" aria-label="Painel do Gêmeo Digital">
+          <div class="sidebar-section">
+            <h3 class="sidebar-subtitle">Previsões Ativas</h3>
+            <ul id="predictions-list" class="predictions-list" aria-live="polite"></ul>
+          </div>
+          <div class="sidebar-section">
+            <h3 class="sidebar-subtitle">Registro de Eventos</h3>
+            <ul id="events-feed" class="events-feed" aria-live="polite"></ul>
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- Controladoria e Ações Globais -->
+      <div class="prep-action game-action-panel">
+        <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
+        <p class="generator-counter">Gerador de Emergência: <span id="generator-uses">2</span>/2 disponíveis</p>
+        <div class="game-action-buttons">
+          <button id="btn-redirect" class="btn-sensor" data-action="redirect" aria-label="Redirecionar carga entre duas zonas">↔ Redirecionar</button>
+          <button id="btn-recalibrate" class="btn-sensor" data-action="recalibrate" aria-label="Recalibrar sensor entre duas zonas">📡 Recalibrar</button>
+        </div>
+        <div id="attention-cooldown" class="attention-cooldown hidden" aria-hidden="true">
+          <div class="attention-cooldown-fill"></div>
+        </div>
+      </div>
+
     </section>
 
-    <!-- Elemento de áudio para a música de fundo em loop -->
-    <audio id="bg-music" loop src="background-music.mp3"></audio>
+    <!-- ======================================================================
+         TELA 4 — RESULTADO FINAL
+         ====================================================================== -->
+    <section id="screen-result" class="screen hidden" aria-label="Tela de resultados finais da partida">
+      <main class="menu-container">
+        <header class="title-section">
+          <h2 id="result-title" class="main-title">Fim de Jogo</h2>
+          <p id="result-subtitle" class="subtitle">Análise de desempenho do Gêmeo Digital</p>
+        </header>
+        <div class="action-section">
+          <button id="btn-restart" class="btn-start" onclick="location.reload()">JOGAR NOVAMENTE</button>
+        </div>
+      </main>
+    </section>
 
-    <!-- Link para o arquivo de scripts JavaScript -->
-    <script src="script.js"></script>
 </body>
 </html>
