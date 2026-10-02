@@ -319,35 +319,67 @@
 
       </div>
 
-      <!-- Controladoria e Ações Globais -->
-      <div class="prep-action game-action-panel">
-        <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
-        <p class="generator-counter">Gerador de Emergência: <span id="generator-uses">3</span> disponíveis</p>
-        <div class="game-action-buttons">
-          <button id="btn-redirect" class="btn-sensor" data-action="redirect" aria-label="Redirecionar carga entre duas zonas">↔ Redirecionar</button>
-          <button id="btn-recalibrate" class="btn-sensor" data-action="recalibrate" aria-label="Recalibrar sensor entre duas zonas">📡 Recalibrar</button>
-        </div>
-        <div id="attention-cooldown" class="attention-cooldown hidden" aria-hidden="true">
-          <div class="attention-cooldown-fill"></div>
-        </div>
-      </div>
+ <!-- Controladoria e Ações Globais -->
+<div class="prep-action game-action-panel">
+  <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
+  <p class="generator-counter hidden"><span id="generator-uses"></span></p>
+  
+  <!-- NOVO BOTÃO ÚNICO DE DIAGNÓSTICO -->
+  <div class="telemetry-panel">
+    <button id="btn-scan-system" aria-label="Escanear previsões de sobrecarga no grid">
+      📡 Escanear Telemetria do Grid
+    </button>
+  </div>
+
+  <div id="attention-cooldown" class="attention-cooldown hidden" aria-hidden="true">
+    <div class="attention-cooldown-fill"></div>
+  </div>
+</div>
 
     </section>
-
-    <!-- ======================================================================
+<!-- ======================================================================
          TELA 4 — RESULTADO FINAL
          ====================================================================== -->
     <section id="screen-result" class="screen hidden" aria-label="Tela de resultados finais da partida">
-      <main class="menu-container">
-        <header class="title-section">
-          <h2 id="result-title" class="main-title">Fim de Jogo</h2>
-          <p id="result-subtitle" class="subtitle">Análise de desempenho do Gêmeo Digital</p>
-        </header>
-        <div class="action-section">
-          <button id="btn-restart" class="btn-start" onclick="location.reload()">JOGAR NOVAMENTE</button>
-        </div>
-      </main>
-    </section>
+        <div class="screen-content">
+            <h1 id="result-title">FIM DA OPERAÇÃO</h1>
+            <p id="result-subtitle" class="subtitle">Analisando o impacto da tempestade na infraestrutura...</p>
 
+            <!-- ESTATÍSTICAS DA PARTIDA -->
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 30px 0; text-align: center;">
+                
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.85em; color: #94a3b8; text-transform: uppercase;">Pontuação</div>
+                    <div id="result-score-val" style="font-size: 1.8em; font-weight: bold; color: #f8fafc;">0</div>
+                </div>
+
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.85em; color: #94a3b8; text-transform: uppercase;">Bônus</div>
+                    <div id="result-bonus-val" style="font-size: 1.8em; font-weight: bold; color: #4ade80;">+0 pts</div>
+                </div>
+
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.85em; color: #94a3b8; text-transform: uppercase;">Eficiência Preventiva</div>
+                    <div id="result-preventive-pct" style="font-size: 1.8em; font-weight: bold; color: #60a5fa;">0%</div>
+                </div>
+
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.85em; color: #94a3b8; text-transform: uppercase;">Tempo Sobrevivido</div>
+                    <div id="result-time-survived" style="font-size: 1.8em; font-weight: bold; color: #facc15;">0s</div>
+                </div>
+
+                <div class="stat-card" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 0.85em; color: #94a3b8; text-transform: uppercase;">Zonas Perdidas (Apagão)</div>
+                    <div id="result-blackouts-val" style="font-size: 1.8em; font-weight: bold; color: #f87171;">0</div>
+                </div>
+                
+            </div>
+
+            <div class="actions" style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                <button id="btn-restart" class="btn-action" style="padding: 12px 24px; font-size: 1.1em; cursor: pointer;">Tentar Novamente</button>
+                <button id="btn-menu" class="btn-action" style="padding: 12px 24px; font-size: 1.1em; cursor: pointer;">Voltar ao Menu</button>
+            </div>
+        </div>
+    </section>
 </body>
 </html>

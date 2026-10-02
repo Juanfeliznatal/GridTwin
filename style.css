@@ -680,17 +680,21 @@ ul.hidden {
     animation: pulse-danger 1s infinite;
 }
 
+/* Item 5: Correção de deslocamento das zonas na Tela 3 */
 .game-zone-card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, filter 0.3s ease, transform 0.2s ease;
+    min-height: 220px;
+    height: 220px; /* Altura fixa garantida */
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, filter 0.3s ease;
+    overflow: hidden; /* Evita que variações internas alterem o tamanho do cartão */
 }
 
 .game-zone-card.selected-target {
     border-color: #facc15;
     box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
-    transform: translateY(-2px);
     cursor: crosshair;
 }
 
@@ -731,6 +735,18 @@ ul.hidden {
     font-weight: bold;
 }
 
+/* Oculta os contadores/avisos de sobrecarga por padrão */
+.overload-timer-badge {
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Classe ativada temporariamente quando o jogador clica no botão */
+.overload-timer-badge.telemetry-active {
+    display: inline-block;
+    animation: pulse-red 1s infinite alternate;
+}
+
 .game-zone-card[data-status="calm"] .zone-load-fill {
     background-color: #38bdf8;
     box-shadow: 0 0 8px #38bdf8;
@@ -766,10 +782,14 @@ ul.hidden {
     display: flex;
     gap: 0.5rem;
     margin-top: auto;
+    height: 38px; /* Altura fixa para o container dos botões de ação */
+    min-height: 38px;
+    max-height: 38px;
 }
 
 .btn-action {
     flex: 1;
+    height: 100%;
     background: transparent;
     border: 1px solid #475569;
     color: #94a3b8;
@@ -777,6 +797,9 @@ ul.hidden {
     font-family: 'Space Mono', monospace;
     font-size: 1rem;
     cursor: pointer;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap; /* Impede quebra de linha que empurre os elementos */
     transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
@@ -870,9 +893,54 @@ ul.hidden {
     font-size: 0.9rem;
 }
 
-.game-action-buttons {
+/* Container e Botão de Telemetria */
+.telemetry-panel {
     display: flex;
-    gap: 1.5rem;
+    justify-content: center;
+    width: 100%;
+}
+
+#btn-scan-system {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #0b0f19;
+    background-color: #f59e0b;
+    border: none;
+    border-top: 3px solid #fde68a;
+    border-left: 3px solid #fde68a;
+    border-right: 3px solid #b45309;
+    border-bottom: 3px solid #b45309;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 0px #78350f;
+    width: auto;
+    white-space: nowrap;
+    opacity: 1;
+    transition: all 0.15s ease;
+}
+
+#btn-scan-system:hover:not(:disabled) {
+    background-color: #38bdf8;
+    border-top-color: #bae6fd;
+    border-left-color: #bae6fd;
+    border-right-color: #0284c7;
+    border-bottom-color: #0284c7;
+    box-shadow: 0 4px 0px #0369a1;
+    transform: translateY(-2px);
+}
+
+#btn-scan-system:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0px #0369a1;
+}
+
+#btn-scan-system:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #475569;
+    border-color: #334155;
+    box-shadow: 0 4px 0px #1e293b;
 }
 
 .attention-cooldown {
@@ -908,6 +976,12 @@ ul.hidden {
 @keyframes pulse-hard {
     0% { box-shadow: 0 0 12px rgba(255, 0, 85, 0.6); }
     100% { box-shadow: 0 0 22px rgba(255, 0, 85, 0.9); }
+}
+
+/* Efeito visual piscante para o alerta revelado */
+@keyframes pulse-red {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
 }
 
 @keyframes fade-in-left {
