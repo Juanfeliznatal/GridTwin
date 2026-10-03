@@ -6,17 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const rainThunder = document.getElementById('rain-thunder');
     const lightningFlash = document.getElementById('lightning-flash');
     const startSound = document.getElementById('start-sound');
+    const selectSound = document.getElementById('select-sound');
 
     // Inicia a música assim que o jogador clicar em qualquer lugar da página pela primeira vez
     document.body.addEventListener('click', () => {
         bgMusic.volume = 0.3;
-        rainThunder.volume = 0.2;
 
         bgMusic.play().catch(erro => {
             console.log("O navegador bloqueou a reprodução automática:", erro);
-        });
-        rainThunder.play().catch(erro => {
-            console.log("Erro ao tocar a chuva:", erro);
         });
     }, { once: true });
     
@@ -221,10 +218,19 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSidebarStatus();
     }
 
+    function playSelectSound() {
+    if (selectSound) {
+        selectSound.volume = 0.4; // Ajuste de 0.0 a 1.0 conforme achar melhor
+        selectSound.currentTime = 0; // Rebobina o som instantaneamente para não cortar cliques rápidos
+        selectSound.play().catch(erro => console.log("Erro no som:", erro));
+      }
+    }
+
     document.querySelectorAll('.btn-increase').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const zoneId = e.currentTarget.getAttribute('data-zone-id');
             allocateSensor(zoneId);
+            playSelectSound();
         });
     });
 
@@ -232,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             const zoneId = e.currentTarget.getAttribute('data-zone-id');
             deallocateSensor(zoneId);
+            playSelectSound();
         });
     });
 
@@ -279,6 +286,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2500);
                 } else {
                     if (warningEl) warningEl.classList.add('hidden');
+                    
+                    // Efeito Sonoro de Chuva e Trovão ao iniciar o jogo
+                    rainThunder.volume = 0.2;
+                    rainThunder.play().catch(erro => console.log("Erro ao tocar a chuva:", erro));
+
                     window.showScreen('screen-game');
                     if (typeof initScreen3 === 'function') {
                         initScreen3();
@@ -806,6 +818,14 @@ function revelarTelemetriaSobrecargas() {
   if (gameState.isAttentionBusy || gameState.isGameOver) return;
   if (gameState.telemetryCooldownUntil && gameState.telemetryCooldownUntil > now) return;
 
+  // Efeito Sonoro do scanner de telemetria
+  const scannerSound = document.getElementById('scanner-sound');
+  if (scannerSound) {
+      scannerSound.volume = 0.8; // Ajuste o volume se necessário
+      scannerSound.currentTime = 0;
+      scannerSound.play().catch(erro => console.log(erro));
+  }
+
   // Cooldown de 5 segundos contado a partir da ativação
   gameState.telemetryCooldownUntil = now + 5000;
 
@@ -928,6 +948,13 @@ function executeCutAction(zoneId) {
   if (gameState.status[zoneId] === 'blackout') return;
   if (gameState.cutCooldowns[zoneId] && gameState.cutCooldowns[zoneId] > now) return;
 
+  const cutSound = document.getElementById('cut-sound');
+  if (cutSound) {
+      cutSound.volume = 0.4;
+      cutSound.currentTime = 0;
+      cutSound.play().catch(erro => console.log(erro));
+  }
+
   const currentLoad = gameState.loads[zoneId];
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
@@ -960,6 +987,13 @@ function executeGeneratorAction(zoneId) {
   if (gameState.status[zoneId] === 'blackout') return;
   if (gameState.globalGeneratorCooldownUntil > now) return; // Checagem global
 
+  const generatorSound = document.getElementById('generator-sound');
+  if (generatorSound) {
+      generatorSound.volume = 0.4;
+      generatorSound.currentTime = 0;
+      generatorSound.play().catch(erro => console.log(erro));
+  }
+  
   const currentLoad = gameState.loads[zoneId];
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
