@@ -332,6 +332,16 @@ ul.hidden {
     font-size: 0.85em;
 }
 
+/* Modo FÁCIL Selecionado (Verde Néon) */
+.btn-diff[data-diff="easy"].active {
+    background: #00cc88;
+    border-color: #33ffaa;
+    color: #050b14;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(0, 255, 170, 0.55);
+    transform: scale(1.05);
+}
+
 /* Modo MÉDIO Selecionado (Amarelo/Laranja Néon) */
 .btn-diff[data-diff="medium"].active {
     background: #ffaa00;

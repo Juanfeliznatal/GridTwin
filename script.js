@@ -326,22 +326,31 @@ window.selectedDifficulty = window.selectedDifficulty || 'medium';
 const DIFFICULTY_SETTINGS = {
   easy: {
     growthPhases: [2.0, 2.5, 3.0],
+    growthIntervalMs: 1000,
     cutCooldownMs: 1000,
     gracePeriodSec: 10,
     cutReduction: 20
   },
   medium: {
     growthPhases: [2.0, 3.0, 4.0], // Ajustado conforme regras: 2%, 3%, 4%
+    growthIntervalMs: 1500,
     cutCooldownMs: 1000,
     gracePeriodSec: 6,
     cutReduction: 20
   },
   hard: {
     growthPhases: [4.0, 4.0, 4.0], // Ajustado conforme regras: 4% constante
+    growthIntervalMs: 1300,
     cutCooldownMs: 1000,
     gracePeriodSec: 6,
     cutReduction: 20
   }
+};
+
+const DIFFICULTY_LABELS = {
+  easy: 'Fácil',
+  medium: 'Médio',
+  hard: 'Difícil'
 };
 
 const ZONE_NAMES = {
@@ -431,7 +440,7 @@ function initScreen3() {
   const predictionsList = document.getElementById('predictions-list');
   if (predictionsList) predictionsList.innerHTML = '';
 
-  const diffLabel = gameState.difficulty === 'medium' ? 'Médio' : 'Difícil';
+  const diffLabel = DIFFICULTY_LABELS[gameState.difficulty];
   logEvent(`⚡ Tempestade iniciada (Modo: ${diffLabel})! Monitoramento do Gêmeo Digital ativo.`);
 
   setupGameEventListeners();
@@ -441,10 +450,7 @@ function initScreen3() {
 
   // Inicializa o crescimento em intervalo separado para seguir a regra exata de segundos
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
-  let gInterval = 1000;
-  if (gameState.difficulty === 'medium') gInterval = 1500;
-  else if (gameState.difficulty === 'hard') gInterval = 1300;
-  gameState.growthIntervalTimer = setInterval(applyGrowth, gInterval);
+  gameState.growthIntervalTimer = setInterval(applyGrowth, gameState.config.growthIntervalMs);
 
   scheduleNextRandomEvent();
   updateGameUI();
@@ -1150,7 +1156,7 @@ function renderResultScreen() {
   const blackoutsVal = document.getElementById('result-blackouts-val');
 
   if (resultTitle) {
-    const diffText = res.difficulty === 'medium' ? 'Médio' : 'Difícil';
+    const diffText = DIFFICULTY_LABELS[res.difficulty] || DIFFICULTY_LABELS.medium;
     resultTitle.textContent = res.victory ? `SOBREVIVÊNCIA ALCANÇADA (${diffText.toUpperCase()})` : `COLAPSO DO SISTEMA (${diffText.toUpperCase()})`;
     resultTitle.style.color = res.victory ? "#5eead4" : "#f59e0b";
   }
