@@ -154,27 +154,38 @@
         <!-- Painel Lateral Telemétrico -->
         <aside class="prep-sidebar prep-sidebar-scroll" aria-label="Painel do Gêmeo Digital">
           <div class="sidebar-content-wrapper">
-            <h3 class="sidebar-info-title">Manual do Operador & Gêmeo Digital</h3>
-            
-            <p class="sidebar-intro">
-              <strong>O Gêmeo Digital:</strong> Uma réplica virtual da rede que detecta anomalias. O sistema só prevê sobrecargas em zonas ativamente monitoradas. Zonas "cegas" sofrem apagões repentinos.
-            </p>
+           <h3 class="sidebar-info-title">Manual do Operador & Gêmeo Digital</h3>
 
-            <div class="mechanics-info">
-              <p><strong>Níveis de Monitoramento:</strong> Nível 1 fornece previsões imprecisas. Nível 2 fornece o tempo exato para o colapso da zona.</p>
-              
-              <p><strong>Tesômetro (Barra de Carga):</strong> Indica a saturação energética da zona (0 a 100). Se atingir 100, a zona fica crítica e você terá apenas alguns segundos para agir antes de um apagão (Blackout).</p>
-              
-              <p><strong>Raios e Eventos:</strong> A tempestade traz raios que causam picos maciços de carga (+30). Condições extremas também podem desativar sensores temporariamente.</p>
-              
-              <p><strong>Mecanismos de Resposta:</strong></p>
-              <ul class="mechanics-list">
-                <li><em>Cortar Carga (✂):</em> Reduz a carga instantaneamente.</li>
-                <li><em>Gerador (⚡):</em> Restaura a zona ao nível de carga seguro (uso limitado).</li>
-                <li><em>Redirecionar:</em> Transfere carga de uma zona crítica para uma mais folgada.</li>
-                <li><em>Recalibrar:</em> Reposiciona um sensor para outra zona (demora 10s).</li>
-              </ul>
-            </div>
+<p class="sidebar-intro">
+  <strong>O Gêmeo Digital:</strong> Uma réplica virtual da rede que monitora picos e anomalias. Para visualizar as previsões de sobrecarga no painel, acione o botão <em>"Escanear Telemetria do Grid"</em> durante a tempestade (exibe dados por 3,7s com recarga de 5s). Zonas "cegas" oculta a carga exata (??) e atraem mais raios.
+</p>
+
+<div class="mechanics-info">
+  <p><strong>Níveis de Monitoramento (Orçamento Total: 8 pts):</strong></p>
+  <ul class="mechanics-list" style="margin-bottom: 0.8rem;">
+    <li><em>Nível 0 (Sem Sensor):</em> Carga ocultada (??) e maior exposição a raios.</li>
+    <li><em>Nível 1 (Custo: 1 pt):</em> Exibe a carga exata e previsões aproximadas (±3s).</li>
+    <li><em>Nível 2 (Custo: +2 pts):</em> Exibe a carga exata e a contagem exata para sobrecargas.</li>
+  </ul>
+
+  <p><strong>Tesômetro (Barra de Carga 0 a 100):</strong></p>
+  <ul class="mechanics-list" style="margin-bottom: 0.8rem;">
+    <li><em>0 a 69 (Calmaria):</em> Operação segura.</li>
+    <li><em>70 a 99 (Alerta):</em> Risco elevado. Ações preventivas aqui geram <strong>+50 pontos</strong>.</li>
+    <li><em>100 (Crítico):</em> Inicia a janela de tolerância de <strong>6 segundos</strong>. Se a carga não for reduzida a tempo, ocorre um <strong>Blackout permanente</strong> (-30 pts).</li>
+  </ul>
+
+  <p><strong>Raios e Falhas:</strong> Raios causam picos maciços (+30 de carga). Tempestades severas podem causar falha de sensor por 8 segundos.</p>
+
+  <p><strong>Mecanismos de Resposta:</strong></p>
+  <ul class="mechanics-list">
+    <li><em>Cortar Carga (✂):</em> Reduz 20 de carga da zona (recarga de 1s por zona).</li>
+    <li><em>Gerador (⚡):</em> Restaura a zona para a carga inicial segura. Uso ilimitado, mas ativa um <strong>cooldown global de 3s</strong> em todas as zonas.</li>
+   <li><em>Escanear Telemetria (📡):</em> Revela instantaneamente as previsões de sobrecarga e tempos de pico no painel por 3,7 segundos (tempo de recarga: 5s).</li>
+  </ul>
+
+  <p style="margin-top: 0.8rem;"><strong>Condição de Vitória:</strong> Sobreviva por 120 segundos. Se <strong>3 zonas sofrerem blackout</strong>, a rede entra em colapso e a partida é perdida.</p>
+</div>
 
             <hr class="sidebar-divider">
 
@@ -319,25 +330,26 @@
 
       </div>
 
- <!-- Controladoria e Ações Globais -->
-<div class="prep-action game-action-panel">
-  <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
-  <p class="generator-counter hidden"><span id="generator-uses"></span></p>
-  
-  <!-- NOVO BOTÃO ÚNICO DE DIAGNÓSTICO -->
-  <div class="telemetry-panel">
-    <button id="btn-scan-system" aria-label="Escanear previsões de sobrecarga no grid">
-      📡 Escanear Telemetria do Grid
-    </button>
-  </div>
+      <!-- Controladoria e Ações Globais -->
+      <div class="prep-action game-action-panel">
+        <p id="selection-hint" class="selection-hint hidden" aria-live="assertive">Selecione a zona de destino...</p>
+        <p class="generator-counter hidden"><span id="generator-uses"></span></p>
+        
+        <!-- PAINEL DE AÇÃO GLOBAL DE TELEMETRIA -->
+        <div class="telemetry-panel">
+          <button id="btn-scan-system" aria-label="Escanear previsões de sobrecarga no grid">
+            📡 Escanear Telemetria do Grid
+          </button>
+        </div>
 
-  <div id="attention-cooldown" class="attention-cooldown hidden" aria-hidden="true">
-    <div class="attention-cooldown-fill"></div>
-  </div>
-</div>
+        <div id="attention-cooldown" class="attention-cooldown hidden" aria-hidden="true">
+          <div class="attention-cooldown-fill"></div>
+        </div>
+      </div>
 
     </section>
-<!-- ======================================================================
+
+    <!-- ======================================================================
          TELA 4 — RESULTADO FINAL
          ====================================================================== -->
     <section id="screen-result" class="screen hidden" aria-label="Tela de resultados finais da partida">
