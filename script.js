@@ -519,6 +519,15 @@ function applyGrowth() {
         gameState.status[z] = 'critical';
         gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
         logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
+
+        // Efeito Sonoro de Alerta Crítico
+        const alertSound = document.getElementById('alert-sound');
+        if (alertSound) {
+            alertSound.volume = 0.8;
+            alertSound.currentTime = 0;
+            alertSound.play().catch(erro => console.log(erro));
+        }
+
       } else if (gameState.loads[z] >= 70 && gameState.loads[z] < 100 && gameState.status[z] === 'calm') {
         gameState.status[z] = 'alert';
       }
@@ -570,6 +579,15 @@ function gameTick() {
           gameState.status[z] = 'critical';
           gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
           logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
+
+          // Efeito Sonoro de Alerta Crítico
+          const alertSound = document.getElementById('alert-sound');
+          if (alertSound) {
+              alertSound.volume = 0.8;
+              alertSound.currentTime = 0;
+              alertSound.play().catch(erro => console.log(erro));
+          }
+
         } else {
           gameState.graceSecondsLeft[z]--;
           if (gameState.graceSecondsLeft[z] <= 0) {
@@ -655,7 +673,14 @@ function updateGameUI() {
     const sensorLevel = window.zoneLevels[z] || 0;
     const isBlind = ((sensorLevel === 0) || (gameState.sensorFailures[z] > 0)) && (currentLoad < 100);
 
-    card.setAttribute('data-status', currentStatus);
+    let statusVisual = currentStatus;
+    
+    // Se a zona já estiver 100% (critical) e o tempo restante for metade ou menos do tempo original da dificuldade
+    if (currentStatus === 'critical' && gameState.graceSecondsLeft[z] <= (gameState.config.gracePeriodSec / 2)) {
+        statusVisual = 'critical-danger';
+    }
+    
+    card.setAttribute('data-status', statusVisual);
     card.setAttribute('data-sensor-level', sensorLevel);
 
     const fillBar = card.querySelector('.zone-load-fill');
