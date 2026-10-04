@@ -310,12 +310,29 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSidebarStatus();
             updateBudgetDisplay();
             window.showScreen('screen-preparation');
+            
+            // Volta a música de fundo ao reiniciar o jogo
+            const bgMusic = document.getElementById('bg-music');
+            if (bgMusic) {
+                bgMusic.currentTime = 0; // <-- Rebobina a música
+                bgMusic.play().catch(e => console.log(e));
+            }
         });
     }
 
     if (btnMenu) {
         btnMenu.addEventListener('click', () => {
             window.showScreen('screen-menu');
+
+            // Reinicia a música de fundo ao voltar para o menu
+            const bgMusic = document.getElementById('bg-music');
+            const rainThunder = document.getElementById('rain-thunder');
+            
+            if (bgMusic) {
+                bgMusic.currentTime = 0; // <-- Rebobina a música
+                bgMusic.play().catch(e => console.log(e));
+            }
+            if (rainThunder) rainThunder.pause();
         });
     }
 
@@ -534,6 +551,14 @@ function gameTick() {
         // Próximo evento de sobrecarga desta zona terá um intervalo maior
         gameState.overloadTimers[z] = Math.floor(Math.random() * 20) + 40;
 
+        // Efeito Sonoro do Evento de Sobrecarga
+        const overloadSound = document.getElementById('overload-sound');
+        if (overloadSound) {
+            overloadSound.volume = 0.8;
+            overloadSound.currentTime = 0;
+            overloadSound.play().catch(erro => console.log(erro));
+        }
+
         logEvent(
           `⚠ SOBRECARGA: A carga da ${ZONE_NAMES[z]} sofreu um aumento crítico!`,
           'event-lightning'
@@ -549,6 +574,15 @@ function gameTick() {
           gameState.graceSecondsLeft[z]--;
           if (gameState.graceSecondsLeft[z] <= 0) {
             gameState.status[z] = 'blackout';
+
+            // Efeito Sonoro de Blackout
+            const blackoutSound = document.getElementById('blackout-sound');
+              if (blackoutSound) {
+                  blackoutSound.volume = 0.6; // Volume mais alto para dar impacto
+                  blackoutSound.currentTime = 0;
+                  blackoutSound.play().catch(erro => console.log(erro));
+              }
+
             gameState.blackoutSecondsLeft[z] = 15;
             addScore(-30);
             logEvent(`💥 BLACKOUT: ${ZONE_NAMES[z]} apagou! (-30 pts)`);
@@ -788,6 +822,15 @@ function executeRandomEvent() {
     if (weights.length > 0) {
       const targetZone = weights[Math.floor(Math.random() * weights.length)];
       gameState.loads[targetZone] = Math.min(100, gameState.loads[targetZone] + 30);
+
+      // Efeito Sonoro do Evento de Raio
+      const shockSound = document.getElementById('shock-sound');
+      if (shockSound) {
+          shockSound.volume = 0.4; 
+          shockSound.currentTime = 0;
+          shockSound.play().catch(erro => console.log(erro));
+      }
+
       logEvent(`⚡ RAIO! Atingiu a ${ZONE_NAMES[targetZone]} (+30 de carga)!`, 'event-lightning');
       updateGameUI();
     }
@@ -802,6 +845,15 @@ function executeRandomEvent() {
     if (eligibleZones.length > 0) {
       const targetZone = eligibleZones[Math.floor(Math.random() * eligibleZones.length)];
       gameState.sensorFailures[targetZone] = 8;
+
+      // Efeito Sonoro do Evento de Falha de Sensor
+      const sensorFailuresSound = document.getElementById('sensor_failures-sound');
+      if (sensorFailuresSound) {
+          sensorFailuresSound.volume = 0.4; // Ajuste se achar muito alto
+          sensorFailuresSound.currentTime = 0;
+          sensorFailuresSound.play().catch(erro => console.log(erro));
+      }
+
       logEvent(`⚠ FALHA DE SENSOR: Sinal perdido na ${ZONE_NAMES[targetZone]} por 8s!`, 'event-sensor');
       updateGameUI();
     }
@@ -1127,6 +1179,32 @@ function endGame(isVictory) {
   if (gameState.gameInterval) clearInterval(gameState.gameInterval);
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
   if (gameState.eventTimeout) clearTimeout(gameState.eventTimeout);
+
+  // Efeito Sonoro de Derrota e Vitória
+  if (!isVictory) { 
+      const gameoverSound = document.getElementById('game_over-sound');
+      if (gameoverSound) {
+          gameoverSound.volume = 0.4;
+          gameoverSound.play().catch(erro => console.log(erro));
+        }
+      
+      const bgMusic = document.getElementById('bg-music');
+      const rainThunder = document.getElementById('rain-thunder');
+    
+      if (bgMusic) bgMusic.pause();
+      if (rainThunder) rainThunder.pause();
+      } 
+  else {
+      const victorySound = document.getElementById('victory-sound'); // Ajuste o ID se necessário
+      if (victorySound) {
+          victorySound.volume = 0.8;
+          victorySound.play().catch(erro => console.log(erro));
+      }
+      
+      // Captura e pausa apenas a chuva (a música continua tocando normalmente)
+      const rainThunder = document.getElementById('rain-thunder');
+      if (rainThunder) rainThunder.pause();
+      }
 
   let bonus = 0;
   if (isVictory && gameState.totalActionsCount > 0) {
