@@ -28,6 +28,18 @@
     <audio id="start-sound">
       <source src="assets\start-sound.mp3" type="audio/mpeg">
     </audio>
+    <audio id="select-sound">
+      <source src="assets\select_button.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="generator-sound">
+      <source src="assets\generator-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="cut-sound">
+      <source src="assets\cut-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="scanner-sound">
+      <source src="assets\scanner-sound.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- Camada para o efeito visual de flash de raio/tempestade -->
     <div id="lightning-flash" class="lightning-flash"></div>
@@ -69,6 +81,7 @@
         <!-- Seletor de Dificuldade -->
         <div class="difficulty-selector">
           <label>DIFICULDADE:</label>
+          <button type="button" class="btn-diff" data-diff="easy">FÁCIL</button>
           <button type="button" class="btn-diff active" data-diff="medium">MÉDIO</button>
           <button type="button" class="btn-diff" data-diff="hard">DIFÍCIL</button>
         </div>
