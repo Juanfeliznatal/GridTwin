@@ -653,13 +653,16 @@ function updateGameUI() {
     const currentLoad = Math.min(100, Math.max(0, gameState.loads[z]));
     const currentStatus = gameState.status[z];
     const sensorLevel = window.zoneLevels[z] || 0;
-    const isBlind = sensorLevel === 0;
+    const isBlind = ((sensorLevel === 0) || (gameState.sensorFailures[z] > 0)) && (currentLoad < 100);
 
     card.setAttribute('data-status', currentStatus);
     card.setAttribute('data-sensor-level', sensorLevel);
 
     const fillBar = card.querySelector('.zone-load-fill');
-    if (fillBar) fillBar.style.width = `${currentLoad}%`;
+    if (fillBar) {
+        // Se estiver cego, esconde a barra (0%). Se não, mostra o tamanho real.
+        fillBar.style.width = isBlind ? '0%' : `${currentLoad}%`;
+    }
 
     const loadValLabel = card.querySelector('.load-value');
     if (loadValLabel) {
