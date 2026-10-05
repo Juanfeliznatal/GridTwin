@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.zoneLevels = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
     window.selectedDifficulty = 'medium'; 
-    const upgradeCosts = { 1: 1, 2: 2 }; 
+    const upgradeCosts = { 1: 1, 2: 1 }; 
 
     /* ==========================================================================
        1. CONTROLE DE NAVEGAÇÃO SPA
