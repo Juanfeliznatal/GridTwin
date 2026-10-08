@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicia a música assim que o jogador clicar em qualquer lugar da página pela primeira vez
     document.body.addEventListener('click', () => {
-        bgMusic.volume = 0.3;
-
-        bgMusic.play().catch(erro => {
-            console.log("O navegador bloqueou a reprodução automática:", erro);
-        });
+        if (bgMusic) {
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(erro => {
+                console.log("O navegador bloqueou a reprodução automática:", erro);
+            });
+        }
     }, { once: true });
     
     // DOM: Botões de navegação
@@ -219,11 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playSelectSound() {
-    if (selectSound) {
-        selectSound.volume = 0.4; // Ajuste de 0.0 a 1.0 conforme achar melhor
-        selectSound.currentTime = 0; // Rebobina o som instantaneamente para não cortar cliques rápidos
-        selectSound.play().catch(erro => console.log("Erro no som:", erro));
-      }
+        if (selectSound) {
+            selectSound.volume = 0.4;
+            selectSound.currentTime = 0;
+            selectSound.play().catch(erro => console.log("Erro no som:", erro));
+        }
     }
 
     document.querySelectorAll('.btn-increase').forEach(btn => {
@@ -287,9 +288,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     if (warningEl) warningEl.classList.add('hidden');
                     
-                    // Efeito Sonoro de Chuva e Trovão ao iniciar o jogo
-                    rainThunder.volume = 0.2;
-                    rainThunder.play().catch(erro => console.log("Erro ao tocar a chuva:", erro));
+                    if (rainThunder) {
+                        rainThunder.volume = 0.2;
+                        rainThunder.play().catch(erro => console.log("Erro ao tocar a chuva:", erro));
+                    }
 
                     window.showScreen('screen-game');
                     if (typeof initScreen3 === 'function') {
@@ -311,10 +313,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBudgetDisplay();
             window.showScreen('screen-preparation');
             
-            // Volta a música de fundo ao reiniciar o jogo
-            const bgMusic = document.getElementById('bg-music');
             if (bgMusic) {
-                bgMusic.currentTime = 0; // <-- Rebobina a música
+                bgMusic.currentTime = 0;
                 bgMusic.play().catch(e => console.log(e));
             }
         });
@@ -324,12 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnMenu.addEventListener('click', () => {
             window.showScreen('screen-menu');
 
-            // Reinicia a música de fundo ao voltar para o menu
-            const bgMusic = document.getElementById('bg-music');
-            const rainThunder = document.getElementById('rain-thunder');
-            
             if (bgMusic) {
-                bgMusic.currentTime = 0; // <-- Rebobina a música
+                bgMusic.currentTime = 0;
                 bgMusic.play().catch(e => console.log(e));
             }
             if (rainThunder) rainThunder.pause();
@@ -351,28 +347,31 @@ if (typeof window.zoneLevels === 'undefined') {
 
 window.selectedDifficulty = window.selectedDifficulty || 'medium';
 
-// Configurações dos Modos (Cortar Carga atualizado para 20%)
+// Configurações dos Modos
 const DIFFICULTY_SETTINGS = {
   easy: {
     growthPhases: [2.0, 2.5, 3.0],
-    growthIntervalMs: 1000,
+    growthIntervalMs: 1700,
     cutCooldownMs: 1000,
     gracePeriodSec: 10,
-    cutReduction: 20
+    cutReduction: 20,
+    generatorCooldownMs: 4000
   },
   medium: {
-    growthPhases: [2.0, 3.0, 4.0], // Ajustado conforme regras: 2%, 3%, 4%
+    growthPhases: [2.0, 3.5, 4.7],
     growthIntervalMs: 1500,
-    cutCooldownMs: 1000,
-    gracePeriodSec: 6,
-    cutReduction: 20
+    cutCooldownMs: 1200,
+    gracePeriodSec: 8,
+    cutReduction: 17,
+    generatorCooldownMs: 8000
   },
   hard: {
-    growthPhases: [4.0, 4.0, 4.0], // Ajustado conforme regras: 4% constante
-    growthIntervalMs: 1300,
-    cutCooldownMs: 1000,
+    growthPhases: [4.0, 8.0], // Intervalo min-máx para o modo difícil
+    growthIntervalMs: 1300,   // Alterado para 1190 ms no modo difícil
+    cutCooldownMs: 1190,
     gracePeriodSec: 6,
-    cutReduction: 20
+    cutReduction: 15,         // Corte de carga reduzido para 15 pontos no modo difícil
+    generatorCooldownMs: 10000 // Tempo de restauração do gerador ajustado para 10 segundos (10000 ms)
   }
 };
 
@@ -413,7 +412,7 @@ const gameState = {
   sensorOffsets: {}, 
   recalibrations: [],
   gameInterval: null,
-  growthIntervalTimer: null, // Novo timer independente para preenchimento exato da barra
+  growthIntervalTimer: null,
   eventTimeout: null,
   telemetryActiveUntil: 0,
   telemetryCooldownUntil: 0,
@@ -455,7 +454,6 @@ function initScreen3() {
     gameState.sensorFailures[z] = 0;
     gameState.sensorOffsets[z] = 0;
 
-    // Temporizadores iniciais distribuídos para evitar eventos simultâneos
     gameState.overloadTimers[z] = 15 + (z * 15) + Math.floor(Math.random() * 10);
   }
 
@@ -477,7 +475,6 @@ function initScreen3() {
   if (gameState.gameInterval) clearInterval(gameState.gameInterval);
   gameState.gameInterval = setInterval(gameTick, 1000);
 
-  // Inicializa o crescimento em intervalo separado para seguir a regra exata de segundos
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
   gameState.growthIntervalTimer = setInterval(applyGrowth, gameState.config.growthIntervalMs);
 
@@ -498,29 +495,33 @@ function getCurrentPhase() {
           return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 5, maxEvent: 10 };
       }
   } else {
-      // Hard ou Easy caem nos limiares padrão de fase, porém com seus crescimentos fixados em config
       if (elapsed < 40) return { phase: 1, name: "Calmaria", growth: growths[0], minEvent: 20, maxEvent: 30 };
       else if (elapsed < 85) return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 10, maxEvent: 18 };
       else return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 5, maxEvent: 10 };
   }
 }
 
-// Função dedicada de crescimento das barras para garantir a sincronia solicitada de 1.5s / 1.3s
+// Função de crescimento de carga
 function applyGrowth() {
   if (gameState.isGameOver) return;
   const currentPhase = getCurrentPhase();
 
   for (let z = 1; z <= 6; z++) {
     if (gameState.status[z] !== 'blackout') {
-      gameState.loads[z] += currentPhase.growth;
+      let growthAmount = currentPhase.growth;
 
-      // Sincronia de estado imediato para a UI (O tick trata a regressão)
+      // Exclusivo para o modo difícil: variação aleatória entre 4% e 8%
+      if (gameState.difficulty === 'hard') {
+        growthAmount = Math.random() * (8 - 4) + 4;
+      }
+
+      gameState.loads[z] += growthAmount;
+
       if (gameState.loads[z] >= 100 && gameState.status[z] !== 'critical') {
         gameState.status[z] = 'critical';
         gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
         logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
 
-        // Efeito Sonoro de Alerta Crítico
         const alertSound = document.getElementById('alert-sound');
         if (alertSound) {
             alertSound.volume = 0.8;
@@ -548,19 +549,14 @@ function gameTick() {
     }
 
     if (gameState.status[z] === 'blackout') {
-      // Regra: uma vez em blackout, a zona permanece apagada
-      // até o final da partida.
-      // Não deve existir restauração automática da zona.
+      // Zona permanece apagada
     } else {
       gameState.overloadTimers[z]--;
 
       if (gameState.overloadTimers[z] <= 0) {
         gameState.loads[z] += 100;
-
-        // Próximo evento de sobrecarga desta zona terá um intervalo maior
         gameState.overloadTimers[z] = Math.floor(Math.random() * 20) + 40;
 
-        // Efeito Sonoro do Evento de Sobrecarga
         const overloadSound = document.getElementById('overload-sound');
         if (overloadSound) {
             overloadSound.volume = 0.8;
@@ -580,7 +576,6 @@ function gameTick() {
           gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
           logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
 
-          // Efeito Sonoro de Alerta Crítico
           const alertSound = document.getElementById('alert-sound');
           if (alertSound) {
               alertSound.volume = 0.8;
@@ -593,13 +588,12 @@ function gameTick() {
           if (gameState.graceSecondsLeft[z] <= 0) {
             gameState.status[z] = 'blackout';
 
-            // Efeito Sonoro de Blackout
             const blackoutSound = document.getElementById('blackout-sound');
-              if (blackoutSound) {
-                  blackoutSound.volume = 0.6; // Volume mais alto para dar impacto
-                  blackoutSound.currentTime = 0;
-                  blackoutSound.play().catch(erro => console.log(erro));
-              }
+            if (blackoutSound) {
+                blackoutSound.volume = 0.6;
+                blackoutSound.currentTime = 0;
+                blackoutSound.play().catch(erro => console.log(erro));
+            }
 
             gameState.blackoutSecondsLeft[z] = 15;
             addScore(-30);
@@ -675,7 +669,6 @@ function updateGameUI() {
 
     let statusVisual = currentStatus;
     
-    // Se a zona já estiver 100% (critical) e o tempo restante for metade ou menos do tempo original da dificuldade
     if (currentStatus === 'critical' && gameState.graceSecondsLeft[z] <= (gameState.config.gracePeriodSec / 2)) {
         statusVisual = 'critical-danger';
     }
@@ -685,7 +678,6 @@ function updateGameUI() {
 
     const fillBar = card.querySelector('.zone-load-fill');
     if (fillBar) {
-        // Se estiver cego, esconde a barra (0%). Se não, mostra o tamanho real.
         fillBar.style.width = isBlind ? '0%' : `${currentLoad}%`;
     }
 
@@ -709,7 +701,6 @@ function updateGameUI() {
       }
     }
 
-    // O gerador é bloqueado globalmente para TODAS as zonas durante o cooldown de 3s
     if (btnGen) {
       if (isGlobalGeneratorOnCooldown) {
         btnGen.disabled = true;
@@ -790,8 +781,6 @@ function triggerAttentionCooldown() {
 function addScore(points) {
   let adjustedPoints = points;
 
-  // A pontuação considera o nível de dificuldade.
-  // O modo Difícil recebe um peso maior.
   if (points > 0) {
     const diffWeight = gameState.difficulty === 'hard' ? 1.5 : 1.0;
     adjustedPoints = Math.round(points * diffWeight);
@@ -799,7 +788,6 @@ function addScore(points) {
 
   gameState.score += adjustedPoints;
 
-  // A pontuação nunca pode ficar abaixo de zero.
   if (gameState.score < 0) {
     gameState.score = 0;
   }
@@ -851,7 +839,6 @@ function executeRandomEvent() {
       const targetZone = weights[Math.floor(Math.random() * weights.length)];
       gameState.loads[targetZone] = Math.min(100, gameState.loads[targetZone] + 30);
 
-      // Efeito Sonoro do Evento de Raio
       const shockSound = document.getElementById('shock-sound');
       if (shockSound) {
           shockSound.volume = 0.4; 
@@ -874,10 +861,9 @@ function executeRandomEvent() {
       const targetZone = eligibleZones[Math.floor(Math.random() * eligibleZones.length)];
       gameState.sensorFailures[targetZone] = 8;
 
-      // Efeito Sonoro do Evento de Falha de Sensor
       const sensorFailuresSound = document.getElementById('sensor_failures-sound');
       if (sensorFailuresSound) {
-          sensorFailuresSound.volume = 0.4; // Ajuste se achar muito alto
+          sensorFailuresSound.volume = 0.4;
           sensorFailuresSound.currentTime = 0;
           sensorFailuresSound.play().catch(erro => console.log(erro));
       }
@@ -891,28 +877,26 @@ function executeRandomEvent() {
 /* ======================================================================
    SISTEMA DE TELEMETRIA E SCAN
    ====================================================================== */
-const TELEMETRY_VISIBLE_TIME = 3700; // 3,7 segundos
+const TELEMETRY_VISIBLE_TIME = 3700;
+
+let telemetryTimeout = null;
 
 function revelarTelemetriaSobrecargas() {
   const now = Date.now();
   if (gameState.isAttentionBusy || gameState.isGameOver) return;
   if (gameState.telemetryCooldownUntil && gameState.telemetryCooldownUntil > now) return;
 
-  // Efeito Sonoro do scanner de telemetria
   const scannerSound = document.getElementById('scanner-sound');
   if (scannerSound) {
-      scannerSound.volume = 0.8; // Ajuste o volume se necessário
+      scannerSound.volume = 0.8;
       scannerSound.currentTime = 0;
       scannerSound.play().catch(erro => console.log(erro));
   }
 
-  // Cooldown de 5 segundos contado a partir da ativação
   gameState.telemetryCooldownUntil = now + 5000;
 
   logEvent("📡 Varredura de Telemetria ativada pelo Gêmeo Digital.");
 
-  // As informações permanecem visíveis por 3,7 segundos,
-  // independentemente do cooldown de 5 segundos
   gameState.telemetryActiveUntil = now + TELEMETRY_VISIBLE_TIME;
 
   updateGameUI();
@@ -1039,6 +1023,7 @@ function executeCutAction(zoneId) {
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
 
+  // Usa o valor configurado na dificuldade (15 no Difícil, 20 nos demais)
   gameState.loads[zoneId] = Math.max(0, currentLoad - gameState.config.cutReduction);
   
   gameState.cutCooldowns[zoneId] = now + gameState.config.cutCooldownMs;
@@ -1061,11 +1046,10 @@ function executeCutAction(zoneId) {
   updateGameUI();
 }
 
-// Uso Ilimitado com Cooldown GLOBAL de 3 segundos
 function executeGeneratorAction(zoneId) {
   const now = Date.now();
   if (gameState.status[zoneId] === 'blackout') return;
-  if (gameState.globalGeneratorCooldownUntil > now) return; // Checagem global
+  if (gameState.globalGeneratorCooldownUntil > now) return;
 
   const generatorSound = document.getElementById('generator-sound');
   if (generatorSound) {
@@ -1080,7 +1064,6 @@ function executeGeneratorAction(zoneId) {
 
   gameState.loads[zoneId] = gameState.initialLoads[zoneId];
 
-  // Se a zona estava em alerta crítico/100%, recupera o estado para normal
   if (wasCritical) {
     gameState.status[zoneId] = gameState.loads[zoneId] >= 70 ? 'alert' : 'calm';
     gameState.graceSecondsLeft[zoneId] = 0;
@@ -1088,8 +1071,9 @@ function executeGeneratorAction(zoneId) {
 
   gameState.overloadTimers[zoneId] = Math.floor(Math.random() * 20) + 40;
 
-  // Aplica o cooldown GLOBAL de 3000ms (3 segundos) para todas as zonas
-  gameState.globalGeneratorCooldownUntil = now + 3000;
+  // Cooldown dinâmico baseado na dificuldade (10s no modo Difícil, 3s nos demais)
+  const cooldownMs = gameState.config.generatorCooldownMs || 3000;
+  gameState.globalGeneratorCooldownUntil = now + cooldownMs;
 
   gameState.totalActionsCount++;
   
@@ -1100,7 +1084,7 @@ function executeGeneratorAction(zoneId) {
     gameState.preventiveActionsCount++;
   }
 
-  logEvent(`⚡ Gerador de emergência acionado na ${ZONE_NAMES[zoneId]}! (Cooldown global: 3s)`);
+  logEvent(`⚡ Gerador de emergência acionado na ${ZONE_NAMES[zoneId]}! (Cooldown global: ${cooldownMs / 1000}s)`);
   
   updateGameUI();
 }
@@ -1208,7 +1192,6 @@ function endGame(isVictory) {
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
   if (gameState.eventTimeout) clearTimeout(gameState.eventTimeout);
 
-  // Efeito Sonoro de Derrota e Vitória
   if (!isVictory) { 
       const gameoverSound = document.getElementById('game_over-sound');
       if (gameoverSound) {
@@ -1223,13 +1206,12 @@ function endGame(isVictory) {
       if (rainThunder) rainThunder.pause();
       } 
   else {
-      const victorySound = document.getElementById('victory-sound'); // Ajuste o ID se necessário
+      const victorySound = document.getElementById('victory-sound');
       if (victorySound) {
           victorySound.volume = 0.8;
           victorySound.play().catch(erro => console.log(erro));
       }
       
-      // Captura e pausa apenas a chuva (a música continua tocando normalmente)
       const rainThunder = document.getElementById('rain-thunder');
       if (rainThunder) rainThunder.pause();
       }
@@ -1246,16 +1228,11 @@ function endGame(isVictory) {
     : `💀 DERROTA! A cidade sofreu um colapso energético total.`
   );
 
-  // Cálculo revisado da Eficiência Preventiva de acordo com a dificuldade
   let efficiencyPct = 0;
 
   if (gameState.totalActionsCount > 0) {
-    const baseRatio =
-      gameState.preventiveActionsCount / gameState.totalActionsCount;
-
-    // Parâmetro compatível com a pressão do modo Difícil
-    const diffWeight =
-      gameState.difficulty === 'hard' ? 1.3 : 1.0;
+    const baseRatio = gameState.preventiveActionsCount / gameState.totalActionsCount;
+    const diffWeight = gameState.difficulty === 'hard' ? 1.3 : 1.0;
 
     efficiencyPct = Math.min(
       100,
