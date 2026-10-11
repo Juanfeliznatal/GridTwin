@@ -347,15 +347,17 @@ if (typeof window.zoneLevels === 'undefined') {
 
 window.selectedDifficulty = window.selectedDifficulty || 'medium';
 
-// Configurações dos Modos
+// Configurações dos Modos com Sistema de Pontuação e Penalidades Escalonados
 const DIFFICULTY_SETTINGS = {
   easy: {
     growthPhases: [2.0, 2.5, 3.0],
     growthIntervalMs: 1700,
-    cutCooldownMs: 1000,
+    cutCooldownMs: 13000,
     gracePeriodSec: 10,
-    cutReduction: 20,
-    generatorCooldownMs: 4000
+    cutReduction: 15,
+    generatorCooldownMs: 5800,
+    blackoutPenalty: 50,    // Penalidade por blackout no Fácil
+    scoreMultiplier: 1.0    // Multiplicador do Fácil
   },
   medium: {
     growthPhases: [2.0, 3.5, 4.7],
@@ -363,15 +365,19 @@ const DIFFICULTY_SETTINGS = {
     cutCooldownMs: 1200,
     gracePeriodSec: 8,
     cutReduction: 17,
-    generatorCooldownMs: 8000
+    generatorCooldownMs: 7500,
+    blackoutPenalty: 100,   // Penalidade por blackout no Médio
+    scoreMultiplier: 1.25   // Multiplicador do Médio
   },
   hard: {
-    growthPhases: [4.0, 8.0], // Intervalo min-máx para o modo difícil
-    growthIntervalMs: 1300,   // Alterado para 1190 ms no modo difícil
-    cutCooldownMs: 1190,
+    growthPhases: [4.0, 7.0],
+    growthIntervalMs: 1300,
+    cutCooldownMs: 1000,
     gracePeriodSec: 6,
-    cutReduction: 15,         // Corte de carga reduzido para 15 pontos no modo difícil
-    generatorCooldownMs: 10000 // Tempo de restauração do gerador ajustado para 10 segundos (10000 ms)
+    cutReduction: 20,
+    generatorCooldownMs: 9000,
+    blackoutPenalty: 150,   // Penalidade por blackout no Difícil
+    scoreMultiplier: 1.5    // Multiplicador do Difícil
   }
 };
 
@@ -596,8 +602,11 @@ function gameTick() {
             }
 
             gameState.blackoutSecondsLeft[z] = 15;
-            addScore(-30);
-            logEvent(`💥 BLACKOUT: ${ZONE_NAMES[z]} apagou! (-30 pts)`);
+            
+            // Penalidade de blackout personalizada pela dificuldade
+            const blackoutPenalty = (gameState.config && gameState.config.blackoutPenalty) ? gameState.config.blackoutPenalty : 100;
+            addScore(-blackoutPenalty);
+            logEvent(`💥 BLACKOUT: ${ZONE_NAMES[z]} apagou! (-${blackoutPenalty} pts)`);
           }
         }
       } else if (gameState.loads[z] >= 70) {
@@ -778,11 +787,15 @@ function triggerAttentionCooldown() {
   }
 }
 
+// Sistema de Ajuste de Pontuação por Nível de Dificuldade
 function addScore(points) {
   let adjustedPoints = points;
 
   if (points > 0) {
-    const diffWeight = gameState.difficulty === 'hard' ? 1.5 : 1.0;
+    const diffWeight = (gameState.config && gameState.config.scoreMultiplier) 
+      ? gameState.config.scoreMultiplier 
+      : (gameState.difficulty === 'hard' ? 1.5 : (gameState.difficulty === 'medium' ? 1.25 : 1.0));
+      
     adjustedPoints = Math.round(points * diffWeight);
   }
 
@@ -1023,7 +1036,6 @@ function executeCutAction(zoneId) {
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
 
-  // Usa o valor configurado na dificuldade (15 no Difícil, 20 nos demais)
   gameState.loads[zoneId] = Math.max(0, currentLoad - gameState.config.cutReduction);
   
   gameState.cutCooldowns[zoneId] = now + gameState.config.cutCooldownMs;
@@ -1071,7 +1083,6 @@ function executeGeneratorAction(zoneId) {
 
   gameState.overloadTimers[zoneId] = Math.floor(Math.random() * 20) + 40;
 
-  // Cooldown dinâmico baseado na dificuldade (10s no modo Difícil, 3s nos demais)
   const cooldownMs = gameState.config.generatorCooldownMs || 3000;
   gameState.globalGeneratorCooldownUntil = now + cooldownMs;
 
@@ -1219,7 +1230,8 @@ function endGame(isVictory) {
   let bonus = 0;
   if (isVictory && gameState.totalActionsCount > 0) {
     const pct = gameState.preventiveActionsCount / gameState.totalActionsCount;
-    bonus = Math.round(pct * 200);
+    const diffBonusWeight = (gameState.config && gameState.config.scoreMultiplier) ? gameState.config.scoreMultiplier : 1.0;
+    bonus = Math.round(pct * 200 * diffBonusWeight);
     addScore(bonus);
   }
 
@@ -1232,7 +1244,7 @@ function endGame(isVictory) {
 
   if (gameState.totalActionsCount > 0) {
     const baseRatio = gameState.preventiveActionsCount / gameState.totalActionsCount;
-    const diffWeight = gameState.difficulty === 'hard' ? 1.3 : 1.0;
+    const diffWeight = gameState.difficulty === 'hard' ? 1.3 : (gameState.difficulty === 'medium' ? 1.15 : 1.0);
 
     efficiencyPct = Math.min(
       100,
