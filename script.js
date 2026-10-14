@@ -347,7 +347,7 @@ window.selectedDifficulty = window.selectedDifficulty || 'medium';
 // Configurações dos Modos com Sistema de Pontuação e Penalidades Escalonados
 const DIFFICULTY_SETTINGS = {
   easy: {
-    growthPhases: [1.0, 1.5, 2.00],
+    growthPhases: [0.50, 0.78, 1.00],
     growthIntervalMs: 1700,
     cutCooldownMs: 2500,
     gracePeriodSec: 12,
@@ -1126,7 +1126,19 @@ function executeRandomEvent() {
     }
 
     if (weights.length > 0) {
-      const targetZone = weights[Math.floor(Math.random() * weights.length)];
+      // A tempestade concentra a atividade elétrica: 70% dos raios atingem
+      // sua zona ativa; os outros 30% podem atingir outras regiões da rede.
+      // Se a zona da frente estiver apagada, sorteia apenas zonas operacionais.
+      const stormZone = gameState.stormZone;
+      const stormIsAvailable = gameState.status[stormZone] !== 'blackout';
+      const otherZones = weights.filter(z => z !== stormZone);
+      let targetZone;
+      if (stormIsAvailable && (otherZones.length === 0 || Math.random() < 0.70)) {
+        targetZone = stormZone;
+      } else {
+        const candidates = otherZones.length > 0 ? otherZones : weights;
+        targetZone = candidates[Math.floor(Math.random() * candidates.length)];
+      }
       if (!gameState.emergencyOverloads[targetZone] && gameState.status[targetZone] !== 'critical') gameState.loads[targetZone] = Math.min(100, gameState.loads[targetZone] + 30);
 
       const shockSound = document.getElementById('shock-sound');
