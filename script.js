@@ -169,12 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const level = window.zoneLevels[zoneId];
             
             const zoneNames = {
-                1: "Zona 1 — Centro",
-                2: "Zona 2 — Porto",
-                3: "Zona 3 — Distrito Industrial",
-                4: "Zona 4 — Residencial Norte",
-                5: "Zona 5 — Hospital",
-                6: "Zona 6 — Aeroporto"
+                1: "Zona 1",
+                2: "Zona 2",
+                3: "Zona 3",
+                4: "Zona 4",
+                5: "Zona 5",
+                6: "Zona 6"
             };
             
             item.classList.remove('level-1', 'level-2');
@@ -304,10 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnRestart) {
         btnRestart.addEventListener('click', () => {
-            currentBudget = MAX_BUDGET;
-            for (let z = 1; z <= 6; z++) {
-                window.zoneLevels[z] = 0;
-            }
+            // Mantém o saldo e os sensores da partida anterior ao tentar novamente.
             renderZoneCards();
             updateSidebarStatus();
             updateBudgetDisplay();
@@ -350,32 +347,47 @@ window.selectedDifficulty = window.selectedDifficulty || 'medium';
 // Configurações dos Modos com Sistema de Pontuação e Penalidades Escalonados
 const DIFFICULTY_SETTINGS = {
   easy: {
-    growthPhases: [2.0, 2.5, 3.0],
+    growthPhases: [0.50, 0.78, 1.00],
     growthIntervalMs: 1700,
-    cutCooldownMs: 13000,
-    gracePeriodSec: 10,
+    cutCooldownMs: 2500,
+    gracePeriodSec: 12,
+    shieldCriticalBonusSec: 5,
     cutReduction: 15,
-    generatorCooldownMs: 5800,
+    generatorCooldownMs: 9000,
+    generatorReduction: 52,
+    surgeIntervalSec: 10,
+    surgeImpact: 38,
     blackoutPenalty: 50,    // Penalidade por blackout no Fácil
     scoreMultiplier: 1.0    // Multiplicador do Fácil
   },
   medium: {
-    growthPhases: [2.0, 3.5, 4.7],
+    // Médio: crescimento moderadamente elevado em cada fase; recargas e surtos preservados.
+    growthPhases: [2.2, 3.3, 4.4],
     growthIntervalMs: 1500,
-    cutCooldownMs: 1200,
+    cutCooldownMs: 1500,
     gracePeriodSec: 8,
+    shieldCriticalBonusSec: 4,
     cutReduction: 17,
-    generatorCooldownMs: 7500,
+    generatorCooldownMs: 8000,
+    generatorReduction: 50,
+    surgeIntervalSec: 11,
+    surgeImpact: 40,
     blackoutPenalty: 100,   // Penalidade por blackout no Médio
     scoreMultiplier: 1.25   // Multiplicador do Médio
   },
   hard: {
-    growthPhases: [4.0, 7.0],
-    growthIntervalMs: 1300,
-    cutCooldownMs: 1000,
-    gracePeriodSec: 6,
+    // Difícil: crescimento moderadamente maior nas três fases.
+    // Intervalos, recargas e demais regras permanecem inalterados.
+    growthPhases: [2.9, 4.1, 5.3],
+    growthIntervalMs: 1000,
+    cutCooldownMs: 1500,
+    gracePeriodSec: 5,
+    shieldCriticalBonusSec: 3,
     cutReduction: 20,
-    generatorCooldownMs: 9000,
+    generatorCooldownMs: 6000,
+    generatorReduction: 48,
+    surgeIntervalSec: 13,
+    surgeImpact: 42,
     blackoutPenalty: 150,   // Penalidade por blackout no Difícil
     scoreMultiplier: 1.5    // Multiplicador do Difícil
   }
@@ -388,13 +400,80 @@ const DIFFICULTY_LABELS = {
 };
 
 const ZONE_NAMES = {
-  1: "Zona 1 — Centro",
-  2: "Zona 2 — Porto",
-  3: "Zona 3 — Distrito Industrial",
-  4: "Zona 4 — Residencial Norte",
-  5: "Zona 5 — Hospital",
-  6: "Zona 6 — Aeroporto"
+  1: "Zona 1",
+  2: "Zona 2",
+  3: "Zona 3",
+  4: "Zona 4",
+  5: "Zona 5",
+  6: "Zona 6"
 };
+
+// Topologia simplificada da rede: conexões físicas entre setores.
+const GRID_CONNECTIONS = Object.freeze({
+  1: [2, 4, 5], 2: [1, 3, 6], 3: [2, 6],
+  4: [1, 5], 5: [1, 4, 6], 6: [2, 3, 5]
+});
+// Frente climática determinística por partida. O jogador pode antecipar o percurso.
+const STORM_ROUTE = [2, 3, 6, 5, 4, 1];
+const STORM_STEP_SECONDS = 18;
+const STORM_IMPACT = {easy: 7, medium: 8, hard: 11};
+function stormTargetAfter(secondsAhead = 0) {
+  const elapsed = Math.max(0, 120 - gameState.timeRemaining + secondsAhead);
+  return STORM_ROUTE[Math.floor(elapsed / STORM_STEP_SECONDS) % STORM_ROUTE.length];
+}
+function stormSecondsToMove() {
+  const elapsed = Math.max(0, 120 - gameState.timeRemaining);
+  return STORM_STEP_SECONDS - (elapsed % STORM_STEP_SECONDS);
+}
+function advanceStorm() {
+  const previous = gameState.stormZone;
+  const current = stormTargetAfter();
+  if (previous === current) return;
+  gameState.stormZone = current;
+  if (gameState.status[current] !== 'blackout' && gameState.status[current] !== 'critical' && !gameState.emergencyOverloads[current]) {
+    gameState.loads[current] = Math.min(100, gameState.loads[current] + (STORM_IMPACT[gameState.difficulty] || 9));
+  }
+  logEvent(`🌩 FRENTE CLIMÁTICA: ${ZONE_NAMES[current]} sob chuva intensa e descargas elétricas. Próximo deslocamento em ${STORM_STEP_SECONDS}s.`, 'event-lightning');
+}
+function updateStormUI() {
+  const box = document.getElementById('storm-monitor');
+  if (!box) return;
+  const active = gameState.stormZone || stormTargetAfter();
+  const upcoming = STORM_ROUTE[(STORM_ROUTE.indexOf(active) + 1) % STORM_ROUTE.length];
+  const seconds = stormSecondsToMove();
+  box.replaceChildren();
+  const title = document.createElement('strong');
+  title.textContent = `🌩 FRENTE ATIVA · ${ZONE_NAMES[active]}`;
+  const next = document.createElement('span');
+  next.textContent = `Próximo setor: ${ZONE_NAMES[upcoming]} em ${seconds}s`;
+  box.append(title, next);
+  document.querySelectorAll('.game-zone-card').forEach(card => {
+    const z = Number(card.dataset.zoneId);
+    card.classList.toggle('storm-active-zone', z === active && gameState.status[z] !== 'blackout');
+    card.classList.toggle('storm-next-zone', z === upcoming && gameState.status[z] !== 'blackout');
+  });
+}
+
+// A topologia física permanece para cascatas; o redirecionamento pode ocorrer entre quaisquer zonas operacionais.
+const REDIRECT_AMOUNT = 15;
+const CASCADE_LOAD = 24;
+
+function areGridNeighbors(a, b) {
+  return (GRID_CONNECTIONS[a] || []).includes(b);
+}
+
+// Cada blackout redistribui parte da demanda uma única vez.
+// A sobrecarga recebida entra na avaliação normal de risco no próximo tick.
+function propagateGridBlackout(origin) {
+  const neighbors = GRID_CONNECTIONS[origin].filter(z => areGridNeighbors(origin,z) && gameState.status[z] !== 'blackout');
+  if (!neighbors.length) {
+    logEvent(`🔌 Rede isolada: ${ZONE_NAMES[origin]} não possui setores ativos conectados.`, 'event-info');
+    return;
+  }
+  const share = Math.round(CASCADE_LOAD / neighbors.length);
+  neighbors.forEach(z => { if(!gameState.emergencyOverloads[z] && gameState.status[z] !== 'critical') gameState.loads[z] = Math.min(100, gameState.loads[z] + share); });
+  logEvent(`🔗 EFEITO CASCATA: falha em ${ZONE_NAMES[origin]} transferiu +${share} de demanda para ${neighbors.map(z => ZONE_NAMES[z]).join(', ')}.`);
+}
 
 const gameState = {
   timeRemaining: 120,
@@ -416,14 +495,27 @@ const gameState = {
   globalGeneratorCooldownUntil: 0, 
   sensorFailures: {},
   sensorOffsets: {}, 
-  recalibrations: [],
   gameInterval: null,
   growthIntervalTimer: null,
   eventTimeout: null,
-  telemetryActiveUntil: 0,
-  telemetryCooldownUntil: 0,
+  generatorProtectionUntil: {},
+  emergencyOverloads: {},
+  criticalShieldUsed: {},
+  servicePenalty: 0,
+  selectedTelemetryZone: null,
+  stormZone: 2,
   isGameOver: false,
-  overloadTimers: {}
+  overloadTimers: {},
+  lastSurgeElapsed: -999,
+  nextSurge: null,
+  lastSurgeZone: null,
+  surgeCount: 0,
+  dispatchMission: null,
+  dispatchNextCheck: 105,
+  shieldUntil: {}, shieldCooldownUntil: 0, repairUntil: {}, repairCooldownUntil: 0,
+  maintenanceKits: 3,
+  repairKitsSpent: {},
+  topologyVisible: false
 };
 
 function initScreen3() {
@@ -438,17 +530,35 @@ function initScreen3() {
   gameState.selectedOriginId = null;
   gameState.preventiveActionsCount = 0;
   gameState.totalActionsCount = 0;
-  gameState.recalibrations = [];
   gameState.cutCooldowns = {};
   gameState.globalGeneratorCooldownUntil = 0;
   
   gameState.sensorFailures = {};
   gameState.sensorOffsets = {};
-  gameState.telemetryActiveUntil = 0;
-  gameState.telemetryCooldownUntil = 0;
+  gameState.generatorProtectionUntil = {};
+  gameState.emergencyOverloads = {};
+  gameState.criticalShieldUsed = {};
+  gameState.servicePenalty = 0;
+  gameState.selectedTelemetryZone = null;
+  gameState.stormZone = STORM_ROUTE[0];
   gameState.isGameOver = false;
 
+  gameState.dispatchMission = null;
+  gameState.dispatchNextCheck = 105;
+  const dispatchBox = document.getElementById('dispatch-mission');
+  if (dispatchBox) dispatchBox.classList.add('hidden');
+
   gameState.overloadTimers = {};
+  gameState.lastSurgeElapsed = -999;
+  gameState.lastSurgeZone = null;
+  gameState.surgeCount = 0;
+  gameState.nextSurge = null;
+  gameState.shieldUntil = {}; gameState.shieldCooldownUntil = 0;
+  gameState.repairUntil = {}; gameState.repairCooldownUntil = 0;
+  gameState.maintenanceKits = 3; gameState.repairKitsSpent = {};
+  gameState.topologyVisible = false;
+  const operations = document.getElementById('network-operations');
+  if (operations) operations.classList.remove('hidden');
 
   for (let z = 1; z <= 6; z++) {
     const initial = Math.floor(Math.random() * 16) + 15;
@@ -456,13 +566,16 @@ function initScreen3() {
     gameState.loads[z] = initial;
     gameState.status[z] = 'calm';
     gameState.graceSecondsLeft[z] = 0;
+    gameState.emergencyOverloads[z] = false;
+    gameState.criticalShieldUsed[z] = false;
     gameState.blackoutSecondsLeft[z] = 0;
     gameState.sensorFailures[z] = 0;
     gameState.sensorOffsets[z] = 0;
 
-    gameState.overloadTimers[z] = 15 + (z * 15) + Math.floor(Math.random() * 10);
+    gameState.overloadTimers[z] = 999;
   }
 
+  scheduleGridSurge(true);
   document.getElementById('time-remaining').textContent = gameState.timeRemaining;
   document.getElementById('score-value').textContent = gameState.score;
   document.getElementById('blackout-count').textContent = '0';
@@ -470,8 +583,10 @@ function initScreen3() {
   const eventsFeed = document.getElementById('events-feed');
   if (eventsFeed) eventsFeed.innerHTML = '';
   
-  const predictionsList = document.getElementById('predictions-list');
-  if (predictionsList) predictionsList.innerHTML = '';
+  const eventCount = document.getElementById('event-count');
+  if (eventCount) eventCount.textContent = '0';
+  const eventsDetails = document.querySelector('#screen-game .events-details');
+  if (eventsDetails) eventsDetails.open = false;
 
   const diffLabel = DIFFICULTY_LABELS[gameState.difficulty];
   logEvent(`⚡ Tempestade iniciada (Modo: ${diffLabel})! Monitoramento do Gêmeo Digital ativo.`);
@@ -482,9 +597,25 @@ function initScreen3() {
   gameState.gameInterval = setInterval(gameTick, 1000);
 
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
-  gameState.growthIntervalTimer = setInterval(applyGrowth, gameState.config.growthIntervalMs);
+  if (gameState.difficulty === 'medium') {
+    // Apenas no Médio: +2,2/1,5s (0–20s), +3,3/s (20–80s), +4,4/s (80–120s).
+    // Um relógio de 500ms mantém os períodos exatos sem alterar os outros modos.
+    gameState.mediumGrowthAccumulatedMs = 0;
+    gameState.growthIntervalTimer = setInterval(() => {
+      if (gameState.isGameOver) return;
+      gameState.mediumGrowthAccumulatedMs += 500;
+      const intervalMs = (120 - gameState.timeRemaining) < 20 ? 1500 : 1000;
+      if (gameState.mediumGrowthAccumulatedMs >= intervalMs) {
+        gameState.mediumGrowthAccumulatedMs -= intervalMs;
+        applyGrowth();
+      }
+    }, 500);
+  } else {
+    gameState.growthIntervalTimer = setInterval(applyGrowth, gameState.config.growthIntervalMs);
+  }
 
   scheduleNextRandomEvent();
+  logEvent(`🌩 Frente climática detectada: ${ZONE_NAMES[gameState.stormZone]}. A telemetria automática antecipa surtos nas zonas com sensores operacionais.`);
   updateGameUI();
 }
 
@@ -492,19 +623,28 @@ function getCurrentPhase() {
   const elapsed = 120 - gameState.timeRemaining;
   const growths = gameState.config.growthPhases;
 
+  // Médio: 0–20s de adaptação e 100s de pressão crescente, sem afetar
+  // o relógio global dos surtos nem os cooldowns dos equipamentos.
   if (gameState.difficulty === 'medium') {
-      if (elapsed <= 50) {
-          return { phase: 1, name: "Calmaria", growth: growths[0], minEvent: 20, maxEvent: 30 };
-      } else if (elapsed <= 100) {
-          return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 10, maxEvent: 18 };
-      } else {
-          return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 5, maxEvent: 10 };
-      }
-  } else {
-      if (elapsed < 40) return { phase: 1, name: "Calmaria", growth: growths[0], minEvent: 20, maxEvent: 30 };
-      else if (elapsed < 85) return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 10, maxEvent: 18 };
-      else return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 5, maxEvent: 10 };
+    // Preserva os intervalos dos eventos; o crescimento muda aos 20s e 80s.
+    const eventMin = elapsed <= 50 ? 20 : elapsed <= 100 ? 10 : 12;
+    const eventMax = elapsed <= 50 ? 30 : elapsed <= 100 ? 18 : 19;
+    if (elapsed < 20) return { phase: 1, name: "Adaptação", growth: growths[0], minEvent: eventMin, maxEvent: eventMax };
+    if (elapsed < 80) return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: eventMin, maxEvent: eventMax };
+    return { phase: 3, name: "Pressão Máxima", growth: growths[2], minEvent: eventMin, maxEvent: eventMax };
   }
+
+  // Difícil: pressão alta desde o início e intensificação aos 20s e 80s.
+  if (gameState.difficulty === 'hard') {
+    if (elapsed < 20) return { phase: 1, name: "Pressão Alta", growth: growths[0], minEvent: 20, maxEvent: 30 };
+    if (elapsed < 80) return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 10, maxEvent: 18 };
+    return { phase: 3, name: "Pressão Máxima", growth: growths[2], minEvent: 9, maxEvent: 15 };
+  }
+
+  // Fácil preservado exatamente como na versão 2.9.
+  if (elapsed < 40) return { phase: 1, name: "Calmaria", growth: growths[0], minEvent: 20, maxEvent: 30 };
+  if (elapsed < 85) return { phase: 2, name: "Intensificação", growth: growths[1], minEvent: 14, maxEvent: 22 };
+  return { phase: 3, name: "Olho da Tempestade", growth: growths[2], minEvent: 16, maxEvent: 24 };
 }
 
 // Função de crescimento de carga
@@ -516,40 +656,175 @@ function applyGrowth() {
     if (gameState.status[z] !== 'blackout') {
       let growthAmount = currentPhase.growth;
 
-      // Exclusivo para o modo difícil: variação aleatória entre 4% e 8%
+      // Difícil: oscilação em torno da fase (mais intensa, mas administrável).
       if (gameState.difficulty === 'hard') {
-        growthAmount = Math.random() * (8 - 4) + 4;
+        growthAmount *= 0.8 + Math.random() * 0.4;
       }
 
-      gameState.loads[z] += growthAmount;
-
-      if (gameState.loads[z] >= 100 && gameState.status[z] !== 'critical') {
-        gameState.status[z] = 'critical';
-        gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
-        logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
-
-        const alertSound = document.getElementById('alert-sound');
-        if (alertSound) {
-            alertSound.volume = 0.8;
-            alertSound.currentTime = 0;
-            alertSound.play().catch(erro => console.log(erro));
-        }
-
-      } else if (gameState.loads[z] >= 70 && gameState.loads[z] < 100 && gameState.status[z] === 'calm') {
-        gameState.status[z] = 'alert';
+      // Setor sob a frente climática cresce mais rápido enquanto ela permanece.
+      if (gameState.stormZone === z) growthAmount += gameState.difficulty === 'hard' ? 1.6 : 1.0;
+      if (Date.now() < (gameState.shieldUntil[z] || 0)) growthAmount *= 0.25; // Blindagem desacelera em 75%, mas nunca reduz a carga atual.
+      // O crescimento natural também pode atingir 100 e iniciar a janela crítica.
+      // O surto programado permanece um evento distinto, que leva a 100 instantaneamente.
+      if (!gameState.emergencyOverloads[z] && gameState.status[z] !== 'critical' && gameState.loads[z] < 100) {
+        gameState.loads[z] = Math.min(100, gameState.loads[z] + growthAmount);
+        gameState.status[z] = gameState.loads[z] >= 70 ? 'alert' : 'calm';
       }
+
     }
   }
   updateGameUI();
+}
+
+// Central de despacho: desafios emergentes opcionais baseados em leituras reais.
+// Não exige novos botões, não aumenta carga e não aplica penalidade por falha.
+function updateDispatchMission() {
+  const panel = document.getElementById('dispatch-mission');
+  const caption = document.getElementById('dispatch-mission-desc');
+  const countdown = document.getElementById('dispatch-mission-time');
+  if (!panel || !caption || !countdown || gameState.isGameOver) return;
+
+  let mission = gameState.dispatchMission;
+  if (mission) {
+    const z = mission.zone;
+    if (gameState.status[z] === 'blackout') {
+      logEvent(`📻 Despacho encerrado: ${ZONE_NAMES[z]} entrou em blackout.`, 'event-info');
+      gameState.dispatchMission = null;
+      gameState.dispatchNextCheck = gameState.timeRemaining - 23;
+      mission = null;
+    } else if (gameState.loads[z] < 70) {
+      addScore(25);
+      logEvent(`📻 MISSÃO CONCLUÍDA: ${ZONE_NAMES[z]} estabilizada! Bônus de +25 pontos.`, 'event-info');
+      gameState.dispatchMission = null;
+      gameState.dispatchNextCheck = gameState.timeRemaining - 26;
+      mission = null;
+    } else if (gameState.timeRemaining <= mission.deadline) {
+      logEvent(`📻 Despacho expirado: ${ZONE_NAMES[z]} segue sob pressão (sem penalidade).`, 'event-info');
+      gameState.dispatchMission = null;
+      gameState.dispatchNextCheck = gameState.timeRemaining - 23;
+      mission = null;
+    }
+  }
+
+  // Só oferece nova missão após 15s iniciais, com folga de pelo menos 16s
+  // antes do fim da partida. Zonas não monitoradas não revelam carga oculta.
+  if (!mission && gameState.timeRemaining <= gameState.dispatchNextCheck && gameState.timeRemaining >= 18) {
+    const atRisk = [1,2,3,4,5,6].filter(z =>
+      gameState.status[z] !== 'blackout' &&
+      (window.zoneLevels[z] || 0) > 0 &&
+      gameState.sensorFailures[z] <= 0 &&
+      gameState.loads[z] >= 80
+    ).sort((a,b) => gameState.loads[b] - gameState.loads[a]);
+    if (atRisk.length) {
+      const z = atRisk[0];
+      mission = {zone:z,deadline:Math.max(0,gameState.timeRemaining-16)};
+      gameState.dispatchMission = mission;
+      logEvent(`📻 DESPACHO: estabilize ${ZONE_NAMES[z]} abaixo de 70 em 16s para ganhar 25 pontos. Missão opcional.`, 'event-info');
+    } else {
+      gameState.dispatchNextCheck = gameState.timeRemaining - 5;
+    }
+  }
+
+  if (!mission) {
+    panel.classList.add('hidden');
+    return;
+  }
+  const secondsLeft = Math.max(0, gameState.timeRemaining - mission.deadline);
+  caption.textContent = `Estabilize ${ZONE_NAMES[mission.zone]} abaixo de 70 de carga · bônus +25 · sem penalidade.`;
+  countdown.textContent = `${secondsLeft}s`;
+  panel.classList.remove('hidden');
+}
+
+// v2.4: um único relógio global de surtos. O alvo é definido ANTES do aviso.
+// A próxima ocorrência respeita o tempo de resposta necessário para recarregar o gerador.
+function gridElapsed() { return 120 - gameState.timeRemaining; }
+function secondsToGridSurge() {
+  return gameState.nextSurge ? Math.max(0, gameState.nextSurge.at - gridElapsed()) : Infinity;
+}
+function selectUpcomingSurgeZone() {
+  const candidates = [1,2,3,4,5,6].filter(z => gameState.status[z] !== 'blackout');
+  if (!candidates.length) return null;
+  // Mantém variedade e torna as previsões valiosas, sem limitar os riscos à zona mais carregada.
+  const ranked = candidates.map(z => ({z, priority:
+    gameState.loads[z] + (stormTargetAfter(gameState.config.surgeIntervalSec) === z ? 10 : 0)
+    + (Math.random() * 12) - (z === gameState.lastSurgeZone ? 32 : 0)
+  })).sort((a,b) => b.priority - a.priority);
+  return ranked[Math.floor(Math.random() * Math.min(2,ranked.length))].z;
+}
+function scheduleGridSurge(first=false) {
+  const z = selectUpcomingSurgeZone();
+  if (z === null) {gameState.nextSurge=null;return;}
+  const interval = gameState.config.surgeIntervalSec;
+  gameState.nextSurge = {zone:z,at:gridElapsed()+(first ? interval+4 : interval),impact:gameState.config.surgeImpact};
+  updateVirtualSurgeClocks();
+}
+function updateVirtualSurgeClocks() {
+  for (let z=1;z<=6;z++) gameState.overloadTimers[z] =
+    gameState.nextSurge && gameState.nextSurge.zone===z ? secondsToGridSurge() : 999;
+}
+function fireScheduledSurge() {
+  const event = gameState.nextSurge;
+  if (!event || gridElapsed() < event.at) return;
+  const z = event.zone;
+  gameState.lastSurgeElapsed = gridElapsed();
+  gameState.lastSurgeZone = z;
+  gameState.surgeCount++;
+  if (gameState.status[z] !== 'blackout') {
+    if (Date.now() < (gameState.generatorProtectionUntil[z] || 0)) {
+      // Usar o gerador preventivamente também funciona quando a proteção
+      // cobre o instante exato do impacto.
+      logEvent(`🛡 ${ZONE_NAMES[z]} absorveu o surto com o gerador já ativo!`, 'event-info');
+      addScore(20);
+    } else {
+      // Pulso instantâneo: nenhuma quantidade de corte, desvio ou blindagem
+      // impede a emergência. O gerador é a única recuperação possível.
+      gameState.loads[z] = 100;
+      gameState.status[z] = 'critical';
+      gameState.emergencyOverloads[z] = true;
+      gameState.criticalShieldUsed[z] = false;
+      // O gameTick ainda processará a zona neste mesmo segundo.
+      gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec + 1;
+      const sound = document.getElementById('overload-sound');
+      if (sound) { sound.volume = 0.8; sound.currentTime = 0; sound.play().catch(() => {}); }
+      logEvent(`🚨 SOBRECARGA INSTANTÂNEA: ${ZONE_NAMES[z]} chegou a 100%! Use GERADOR ou REDIRECIONAMENTO para evitar o blackout. ${gameState.config.gracePeriodSec}s para agir.`, 'event-lightning');
+    }
+  } else {
+    logEvent(`ℹ Surto passou por ${ZONE_NAMES[z]}, já desconectada.`, 'event-info');
+  }
+  scheduleGridSurge();
+}
+function forecastUpcomingSurge(zone) {
+  if (!monitoredZone(zone) || !gameState.nextSurge || gameState.nextSurge.zone !== zone || gameState.status[zone] === 'blackout') return null;
+  const actual = secondsToGridSurge();
+  const sensor = window.zoneLevels[zone] || 0;
+  const seconds = Math.max(1, actual + (sensor === 1 ? (gameState.sensorOffsets[zone] || 0) : 0));
+  const absorbed = Date.now() + actual * 1000 < (gameState.generatorProtectionUntil[zone] || 0);
+  return { seconds, exact: sensor >= 2, overload: !absorbed, protected: absorbed, actual };
 }
 
 function gameTick() {
   if (gameState.isGameOver) return;
 
   gameState.timeRemaining--;
+  advanceStorm();
+  fireScheduledSurge();
+  updateVirtualSurgeClocks();
   document.getElementById('time-remaining').textContent = gameState.timeRemaining;
 
   for (let z = 1; z <= 6; z++) {
+    if (gameState.repairUntil[z] && Date.now() >= gameState.repairUntil[z]) {
+      gameState.repairUntil[z] = 0;
+      if (gameState.status[z] === 'blackout') {
+        gameState.loads[z] = 48;
+        gameState.status[z] = 'calm';
+        gameState.graceSecondsLeft[z] = 0;
+        gameState.emergencyOverloads[z] = false;
+        gameState.criticalShieldUsed[z] = false;
+        gameState.overloadTimers[z] = Math.max(20, gameState.overloadTimers[z]);
+        delete gameState.repairKitsSpent[z];
+        logEvent(`🔧 Equipe concluiu reparo da ${ZONE_NAMES[z]}: fornecimento restaurado a 48.`);
+      }
+    }
     if (gameState.timeRemaining % 2 === 0) {
         gameState.sensorOffsets[z] = Math.floor(Math.random() * 7) - 3;
     }
@@ -557,29 +832,14 @@ function gameTick() {
     if (gameState.status[z] === 'blackout') {
       // Zona permanece apagada
     } else {
-      gameState.overloadTimers[z]--;
-
-      if (gameState.overloadTimers[z] <= 0) {
-        gameState.loads[z] += 100;
-        gameState.overloadTimers[z] = Math.floor(Math.random() * 20) + 40;
-
-        const overloadSound = document.getElementById('overload-sound');
-        if (overloadSound) {
-            overloadSound.volume = 0.8;
-            overloadSound.currentTime = 0;
-            overloadSound.play().catch(erro => console.log(erro));
-        }
-
-        logEvent(
-          `⚠ SOBRECARGA: A carga da ${ZONE_NAMES[z]} sofreu um aumento crítico!`,
-          'event-lightning'
-        );
-      }
+      // O surto global é processado uma vez por segundo, fora deste laço.
 
       if (gameState.loads[z] >= 100) {
+        gameState.loads[z] = 100; // valor físico capado: nunca acumular além do limite
         if (gameState.status[z] !== 'critical') {
           gameState.status[z] = 'critical';
           gameState.graceSecondsLeft[z] = gameState.config.gracePeriodSec;
+          gameState.criticalShieldUsed[z] = false;
           logEvent(`⚠ ALERTA CRÍTICO: ${ZONE_NAMES[z]} atingiu 100 de carga! Janela de tolerância: ${gameState.config.gracePeriodSec}s.`);
 
           const alertSound = document.getElementById('alert-sound');
@@ -593,6 +853,9 @@ function gameTick() {
           gameState.graceSecondsLeft[z]--;
           if (gameState.graceSecondsLeft[z] <= 0) {
             gameState.status[z] = 'blackout';
+            gameState.emergencyOverloads[z] = false;
+            gameState.criticalShieldUsed[z] = false;
+            propagateGridBlackout(z);
 
             const blackoutSound = document.getElementById('blackout-sound');
             if (blackoutSound) {
@@ -621,15 +884,6 @@ function gameTick() {
     }
   }
 
-  for (let i = gameState.recalibrations.length - 1; i >= 0; i--) {
-    const recal = gameState.recalibrations[i];
-    recal.secondsLeft--;
-    if (recal.secondsLeft <= 0) {
-      window.zoneLevels[recal.target] = Math.min(2, (window.zoneLevels[recal.target] || 0) + 1);
-      logEvent(`📡 Recalibração concluída: Sensor ativado na ${ZONE_NAMES[recal.target]}.`);
-      gameState.recalibrations.splice(i, 1);
-    }
-  }
 
   let currentBlackouts = 0;
   for (let z = 1; z <= 6; z++) {
@@ -664,6 +918,7 @@ function gameTick() {
 }
 
 function updateGameUI() {
+  updateDispatchMission();
   const now = Date.now();
   const isGlobalGeneratorOnCooldown = gameState.globalGeneratorCooldownUntil > now;
 
@@ -683,6 +938,7 @@ function updateGameUI() {
     }
     
     card.setAttribute('data-status', statusVisual);
+    card.classList.toggle('instant-overload', !!gameState.emergencyOverloads[z]);
     card.setAttribute('data-sensor-level', sensorLevel);
 
     const fillBar = card.querySelector('.zone-load-fill');
@@ -704,9 +960,14 @@ function updateGameUI() {
       if (cutOnCooldown) {
         btnCut.disabled = true;
         btnCut.classList.add('on-cooldown');
+        const remaining = Math.max(1, Math.ceil((gameState.cutCooldowns[z] - now)/1000));
+        btnCut.textContent = `✂ ${remaining}s`;
+        btnCut.title = `Corte de carga disponível em ${remaining}s`;
       } else {
         btnCut.disabled = gameState.isAttentionBusy || currentStatus === 'blackout';
         btnCut.classList.remove('on-cooldown');
+        btnCut.textContent = '✂';
+        btnCut.title = `Cortar ${gameState.config.cutReduction} de carga nesta zona`;
       }
     }
 
@@ -714,39 +975,51 @@ function updateGameUI() {
       if (isGlobalGeneratorOnCooldown) {
         btnGen.disabled = true;
         btnGen.classList.add('on-cooldown');
+        const remaining = Math.max(1, Math.ceil((gameState.globalGeneratorCooldownUntil - now)/1000));
+        btnGen.textContent = `⚡ ${remaining}s`;
+        btnGen.title = `Gerador disponível em ${remaining}s (recarga compartilhada)`;
       } else {
         btnGen.disabled = gameState.isAttentionBusy || currentStatus === 'blackout';
         btnGen.classList.remove('on-cooldown');
+        btnGen.textContent = '⚡';
+        btnGen.title = `Gerador: reduz ${gameState.config.generatorReduction} de carga e protege por 9 segundos (recarga global)`;
       }
     }
 
+    if (btnCut && currentStatus === 'critical') {
+      btnCut.disabled = true;
+      btnCut.title = 'Sobrecarga em 100%: use gerador ou redirecione 15 para qualquer zona ativa com capacidade.';
+    }
     const predEl = card.querySelector('.zone-prediction');
     if (predEl) {
-      predEl.textContent = '';
-      predEl.classList.remove('exact-prediction');
+      // Telemetria contínua: sem botão, janela de uso ou recarga.
+      // Sensores ausentes ou temporariamente danificados não revelam previsões.
+      const forecast = forecastUpcomingSurge(z);
+      predEl.classList.remove('exact-prediction', 'scan-risk-visible', 'scan-risk-critical');
+      if(currentStatus==='blackout') {
+        predEl.textContent='SEM ENERGIA';predEl.title='';
+      } else if(currentStatus==='critical') {
+        predEl.textContent=`🚨 100% · RECUPERE EM ${Math.ceil(gameState.graceSecondsLeft[z])}s`;
+        predEl.classList.add('scan-risk-critical');
+        predEl.title='Carga em 100%: use gerador ou redirecione 15 para uma zona com espaço. Blindagem acrescenta tempo uma vez por crise.';
+      } else if(forecast) {
+        predEl.textContent=forecast.protected ? `🛡 SURTO ABSORVIDO ${forecast.seconds}s` : `🚨 SOBRECARGA ${forecast.exact?'EM':'≈'} ${forecast.seconds}s`;
+        predEl.classList.add('scan-risk-visible');
+        if(forecast.overload)predEl.classList.add('scan-risk-critical');
+        if(forecast.exact)predEl.classList.add('exact-prediction');
+        predEl.title=`${forecast.exact?'Contagem precisa (sensor N2)':'Tempo estimado ±3s (sensor N1)'}. Surto instantâneo leva a 100%; gerador ou redirecionamento podem recuperar a zona. Gerador pré-ativado pode absorver o evento.`;
+      } else {predEl.textContent='';predEl.title='';}
+
     }
   }
 
   const btnRedirect = document.getElementById('btn-redirect');
-  const btnRecalibrate = document.getElementById('btn-recalibrate');
-  const btnScanSystem = document.getElementById('btn-scan-system');
-
-  if (btnRedirect) btnRedirect.disabled = gameState.isAttentionBusy;
-  if (btnRecalibrate) btnRecalibrate.disabled = gameState.isAttentionBusy;
-
-  if (btnScanSystem) {
-    const isTelemetryOnCooldown = gameState.telemetryCooldownUntil && gameState.telemetryCooldownUntil > now;
-    if (isTelemetryOnCooldown) {
-      const remainingSec = Math.ceil((gameState.telemetryCooldownUntil - now) / 1000);
-      btnScanSystem.disabled = true;
-      btnScanSystem.textContent = `📡 Telemetria em Recarga (${remainingSec}s)`;
-    } else {
-      btnScanSystem.disabled = gameState.isAttentionBusy;
-      btnScanSystem.textContent = `📡 Escanear Telemetria do Grid`;
-    }
-  }
+  refreshRedirectGuidance();
+  if (btnRedirect) btnRedirect.disabled = gameState.isAttentionBusy || gameState.isGameOver;
 
   updateTelemetryUI();
+  updateStormUI();
+  updateTacticalUI();
 }
 
 function addPredictionSidebar(zoneId, text, isExact = false) {
@@ -759,7 +1032,7 @@ function addPredictionSidebar(zoneId, text, isExact = false) {
   list.appendChild(li);
 }
 
-function triggerAttentionCooldown() {
+function triggerAttentionCooldown(durationMs = 2000) {
   gameState.isAttentionBusy = true;
   const cooldownContainer = document.getElementById('attention-cooldown');
   const cooldownFill = cooldownContainer ? cooldownContainer.querySelector('.attention-cooldown-fill') : null;
@@ -770,7 +1043,7 @@ function triggerAttentionCooldown() {
     cooldownFill.style.transition = 'none';
 
     setTimeout(() => {
-      cooldownFill.style.transition = 'width 2s linear';
+      cooldownFill.style.transition = `width ${durationMs}ms linear`;
       cooldownFill.style.width = '100%';
     }, 20);
 
@@ -778,12 +1051,12 @@ function triggerAttentionCooldown() {
       gameState.isAttentionBusy = false;
       cooldownContainer.classList.add('hidden');
       updateGameUI();
-    }, 2000);
+    }, durationMs);
   } else {
     setTimeout(() => {
       gameState.isAttentionBusy = false;
       updateGameUI();
-    }, 2000);
+    }, durationMs);
   }
 }
 
@@ -820,6 +1093,10 @@ function logEvent(msg, type = '') {
   li.textContent = `[${120 - gameState.timeRemaining}s] ${msg}`;
 
   feed.insertBefore(li, feed.firstChild);
+  const eventCount = document.getElementById('event-count');
+  if (eventCount) eventCount.textContent = String(feed.children.length);
+  // Guardamos somente os acontecimentos recentes para manter o painel fluido.
+  while (feed.children.length > 30) feed.lastElementChild.remove();
 }
 
 function scheduleNextRandomEvent() {
@@ -850,7 +1127,7 @@ function executeRandomEvent() {
 
     if (weights.length > 0) {
       const targetZone = weights[Math.floor(Math.random() * weights.length)];
-      gameState.loads[targetZone] = Math.min(100, gameState.loads[targetZone] + 30);
+      if (!gameState.emergencyOverloads[targetZone] && gameState.status[targetZone] !== 'critical') gameState.loads[targetZone] = Math.min(100, gameState.loads[targetZone] + 30);
 
       const shockSound = document.getElementById('shock-sound');
       if (shockSound) {
@@ -888,82 +1165,248 @@ function executeRandomEvent() {
 }
 
 /* ======================================================================
-   SISTEMA DE TELEMETRIA E SCAN
+   TELEMETRIA CONTÍNUA
+   A previsão usa os sensores instalados e o relógio real dos surtos.
    ====================================================================== */
-const TELEMETRY_VISIBLE_TIME = 3700;
-
-let telemetryTimeout = null;
-
-function revelarTelemetriaSobrecargas() {
-  const now = Date.now();
-  if (gameState.isAttentionBusy || gameState.isGameOver) return;
-  if (gameState.telemetryCooldownUntil && gameState.telemetryCooldownUntil > now) return;
-
-  const scannerSound = document.getElementById('scanner-sound');
-  if (scannerSound) {
-      scannerSound.volume = 0.8;
-      scannerSound.currentTime = 0;
-      scannerSound.play().catch(erro => console.log(erro));
+function monitoredZone(z) {
+  const level = window.zoneLevels[z] || 0;
+  return level > 0 && (gameState.sensorFailures[z] || 0) <= 0;
+}
+function telemetryRisk(z) {
+  const status = gameState.status[z];
+  if (status === 'blackout') return {key:'blackout', text:'BLACKOUT', weight:10000};
+  if (!monitoredZone(z)) return {key:'blind', text:gameState.sensorFailures[z] > 0 ? 'SINAL PERDIDO' : 'SEM SENSOR', weight:-1};
+  const load = gameState.loads[z];
+  if (load >= 100 || status === 'critical') return {key:'critical', text:'CRÍTICO', weight:2000 + load};
+  if (load >= 70) return {key:'alert', text:'ALERTA', weight:1000 + load};
+  return {key:'calm', text:'ESTÁVEL', weight:load};
+}
+function autoTelemetryZone() {
+  const candidates = [1,2,3,4,5,6].filter(z => monitoredZone(z) && gameState.status[z] !== 'blackout');
+  // Não expõe a carga de áreas sem sensores nem escolhe riscos secretos.
+  if (!candidates.length) return gameState.stormZone || 1;
+  return candidates.reduce((best, z) => telemetryRisk(z).weight > telemetryRisk(best).weight ? z : best, candidates[0]);
+}
+function telemetryPrediction(z) {
+  const raw = Math.max(0, Math.ceil(gameState.overloadTimers[z] || 0));
+  if ((window.zoneLevels[z] || 0) >= 2) return `Surto previsto: ${raw}s`;
+  const estimated = Math.max(1, raw + (gameState.sensorOffsets[z] || 0));
+  return `Surto estimado: ~${estimated}s`;
+}
+function scanConnectedZones(zoneId) {
+  return (GRID_CONNECTIONS[zoneId] || []).map(z => {
+    const name = ZONE_NAMES[z];
+    if (gameState.status[z] === 'blackout') return `${name}: desligada`;
+    // O scanner não descobre valores secretos de zonas sem sensor ativo.
+    if (!monitoredZone(z)) return `${name}: sem leitura`;
+    const reading = Math.round(gameState.loads[z]);
+    const possible = gameState.status[z] !== 'critical' && gameState.loads[z] + REDIRECT_AMOUNT < 100;
+    return `${name}: ${reading}/100${possible ? ' (recebe carga)' : ' (risco alto)'}`;
+  }).join(' · ') || 'nenhuma';
+}
+// Microprojeção do gêmeo digital: apoio à decisão, não previsão de todos os eventos.
+// Respeita sensores: sem telemetria operacional, nenhum valor de carga é revelado.
+const SCAN_HORIZON_SECONDS = 6;
+function projectMonitoredLoad(zoneId, addedLoad = 0) {
+  if (!monitoredZone(zoneId)) return null;
+  let projected = gameState.loads[zoneId] + addedLoad;
+  const interval = gameState.config.growthIntervalMs / 1000;
+  // A projeção acompanha a evolução das fases do Médio e do Difícil.
+  const phaseGrowth = getCurrentPhase().growth;
+  for (let second = 1; second <= SCAN_HORIZON_SECONDS; second++) {
+    const weatherZone = stormTargetAfter(second);
+    const futureElapsed = 120 - gameState.timeRemaining + second;
+    const mediumGrowth = futureElapsed < 20 ? 2.2 : futureElapsed < 80 ? 3.3 : 4.4;
+    const hardGrowth = futureElapsed < 20 ? 2.9 : futureElapsed < 80 ? 4.1 : 5.3;
+    const stepGrowth = gameState.difficulty === 'medium' ? mediumGrowth : gameState.difficulty === 'hard' ? hardGrowth : phaseGrowth;
+    const stepInterval = gameState.difficulty === 'medium' ? (futureElapsed < 20 ? 1.5 : 1) : interval;
+    projected += (stepGrowth + (weatherZone === zoneId ? (gameState.difficulty === 'hard' ? 1.6 : 1) : 0)) / stepInterval;
+    if (second === stormSecondsToMove() && weatherZone === zoneId && gameState.stormZone !== zoneId) {
+      projected += STORM_IMPACT[gameState.difficulty] || 9;
+    }
   }
-
-  gameState.telemetryCooldownUntil = now + 5000;
-
-  logEvent("📡 Varredura de Telemetria ativada pelo Gêmeo Digital.");
-
-  gameState.telemetryActiveUntil = now + TELEMETRY_VISIBLE_TIME;
-
-  updateGameUI();
-
-  if (telemetryTimeout) clearTimeout(telemetryTimeout);
-  telemetryTimeout = setTimeout(() => {
-    gameState.telemetryActiveUntil = 0;
-    updateGameUI();
-  }, TELEMETRY_VISIBLE_TIME);
+  // Só o sensor N2 conhece a contagem exata de um surto programado.
+  const sensor = window.zoneLevels[zoneId] || 0;
+  const surgeWithin = (gameState.overloadTimers[zoneId] || 999) <= SCAN_HORIZON_SECONDS;
+  if (sensor >= 2 && surgeWithin) {
+    const protectedAtSurge = (gameState.generatorProtectionUntil[zoneId] || 0) > Date.now() + (gameState.overloadTimers[zoneId] * 1000);
+    projected += protectedAtSurge ? Math.round(gameState.config.surgeImpact * 0.4) : gameState.config.surgeImpact;
+  }
+  const uncertainSurge = sensor === 1 && (gameState.overloadTimers[zoneId] || 999) <= SCAN_HORIZON_SECONDS + 3;
+  return {load: Math.round(projected), uncertainSurge, includedSurge: sensor >= 2 && surgeWithin};
+}
+function scanAssessment(projection) {
+  if (!projection) return {name:'DESCONHECIDO', className:'unknown'};
+  if (projection.load >= 90 || projection.uncertainSurge) return {name:'RISCO ALTO', className:'danger'};
+  if (projection.load >= 70) return {name:'ATENÇÃO', className:'warning'};
+  return {name:'MARGEM BOA', className:'safe'};
 }
 
 function updateTelemetryUI() {
-  const predictionsList = document.getElementById('predictions-list');
-  const isTelemetryActive = Date.now() < (gameState.telemetryActiveUntil || 0);
-
-  if (predictionsList) predictionsList.innerHTML = '';
-
-  if (!isTelemetryActive) {
-    return;
+  const coverage = document.getElementById('sensor-coverage');
+  if (coverage) {
+    const available = [1,2,3,4,5,6].filter(monitoredZone).length;
+    coverage.textContent = `📡 Sensores operacionais: ${available}/6`;
   }
+  const guide = document.getElementById('telemetry-scan-guide');
+  if (!guide) return;
+  guide.textContent = '📡 TELEMETRIA CONTÍNUA · previsão automática nos cartões com sensores operacionais.';
+}
 
-  for (let z = 1; z <= 6; z++) {
-    const sensorLevel = window.zoneLevels[z] || 0;
-    const isSensorFailing = gameState.sensorFailures[z] > 0;
-    const currentStatus = gameState.status[z];
-
-    if (sensorLevel === 0 || isSensorFailing || currentStatus === 'blackout') {
-      continue;
-    }
-
-    let timeToOverload = gameState.overloadTimers[z];
-
-    if (timeToOverload > 0) {
-      if (sensorLevel === 1) {
-        const impreciseTime = Math.max(1, timeToOverload + (gameState.sensorOffsets[z] || 0));
-        addPredictionSidebar(z, `Sobrecarga em ~${impreciseTime}s (Aproximado)`);
-      } else if (sensorLevel === 2) {
-        addPredictionSidebar(z, `Sobrecarga exata em ${timeToOverload}s`, true);
+// O redirecionamento representa o despacho de energia pela rede operacional.
+// Pode ligar quaisquer duas zonas ATIVAS; a topologia física permanece reservada
+// às falhas em cascata. A quantidade enviada é de até 15 unidades.
+// Uma sobrecarga instantânea só pode ser encerrada por uma transferência integral
+// de 15 unidades, evitando recuperar uma zona crítica com apenas 1 unidade.
+function redirectTransferAmount(origin, destination) {
+  if (!origin || !destination || origin === destination) return 0;
+  if (gameState.status[origin] === 'blackout' || gameState.status[destination] === 'blackout' || gameState.status[destination] === 'critical') return 0;
+  const source = Math.max(0, gameState.loads[origin] || 0);
+  const freeCapacity = Math.max(0, 99 - (gameState.loads[destination] || 0));
+  const amount = Math.floor(Math.min(REDIRECT_AMOUNT, source, freeCapacity));
+  if ((gameState.status[origin] === 'critical' || gameState.emergencyOverloads[origin]) && amount < REDIRECT_AMOUNT) return 0;
+  return amount >= 1 ? amount : 0;
+}
+function redirectDestinations(origin) {
+  if (!origin || gameState.status[origin] === 'blackout' || gameState.loads[origin] < 1) return [];
+  return [1,2,3,4,5,6].filter(z => redirectTransferAmount(origin, z) > 0);
+}
+function chooseVisibleRedirectRoute(origin) {
+  // Sugestão baseada em sensores operacionais; não revela cargas ocultas.
+  const candidates = redirectDestinations(origin).filter(z => monitoredZone(z));
+  if (!candidates.length) return null;
+  return candidates.sort((a,b) => {
+    const futureLoad = z => gameState.loads[z] + redirectTransferAmount(origin,z) +
+      (gameState.stormZone === z ? 12 : stormTargetAfter(stormSecondsToMove()) === z ? 6 : 0);
+    return futureLoad(a) - futureLoad(b);
+  })[0];
+}
+function setRedirectOrigin(z) {
+  if (gameState.status[z] === 'blackout' || gameState.loads[z] < 1) return false;
+  gameState.selectedOriginId = z;
+  gameState.pendingAction = 'redirect-target';
+  refreshRedirectGuidance();
+  return true;
+}
+function refreshRedirectGuidance() {
+  const originMode = gameState.pendingAction === 'redirect-origin';
+  const targetMode = gameState.pendingAction === 'redirect-target';
+  const origin = gameState.selectedOriginId;
+  const recommendation = targetMode ? chooseVisibleRedirectRoute(origin) : null;
+  const hintEl = document.getElementById('selection-hint');
+  document.querySelectorAll('.game-zone-card').forEach(card => {
+    // Botões internos não devem capturar o clique no cartão durante a seleção.
+    // Fora do modo de redirecionamento, recuperam o comportamento original.
+    card.querySelectorAll('.btn-action').forEach(btn => {
+      btn.style.pointerEvents = (originMode || targetMode) ? 'none' : '';
+    });
+    const z = Number(card.dataset.zoneId);
+    const amount = targetMode ? redirectTransferAmount(origin,z) : 0;
+    const possible = targetMode && amount > 0;
+    const originEligible = originMode && gameState.status[z] !== 'blackout' && gameState.loads[z] >= 1;
+    card.classList.toggle('redirect-origin-choice', !!originEligible);
+    card.classList.toggle('selected-target', targetMode && z === origin);
+    card.classList.toggle('redirect-possible', !!possible);
+    card.classList.toggle('redirect-best', targetMode && z === recommendation);
+    card.classList.toggle('redirect-unavailable', targetMode && z !== origin && !possible);
+    const note = card.querySelector('.redirect-preview');
+    if (note) note.remove();
+    if (originEligible || targetMode) {
+      const preview = document.createElement('span');
+      preview.className = 'redirect-preview';
+      if (originEligible) {
+        preview.textContent = `↗ ORIGEM · enviar até ${REDIRECT_AMOUNT}`;
+      } else if (targetMode && z === origin) {
+        preview.textContent = `⬆ ORIGEM · ${Math.round(gameState.loads[z])} → ${Math.round(Math.max(0,gameState.loads[z]-REDIRECT_AMOUNT))}`;
+        preview.classList.add('redirect-preview-origin');
+      } else if (possible) {
+        const after = Math.round(gameState.loads[z] + amount);
+        preview.textContent = `${z === recommendation ? '★ SUGERIDA · ' : '✓ DISPONÍVEL · '}+${amount} · ${Math.round(gameState.loads[z])} → ${after}`;
+        if (after >= 85) preview.classList.add('redirect-preview-warning');
+      } else if (targetMode) {
+        preview.classList.add('redirect-preview-unavailable');
+        preview.textContent = gameState.status[z] === 'blackout' ? '✕ INDISPONÍVEL · blackout' :
+          gameState.status[z] === 'critical' ? '✕ INDISPONÍVEL · crítica' :
+          '✕ SEM CAPACIDADE';
       }
+      card.appendChild(preview);
     }
+  });
+  if (hintEl && targetMode && origin) {
+    const from = Math.round(gameState.loads[origin]);
+    const visible = redirectDestinations(origin).length;
+    hintEl.replaceChildren();
+    const info=document.createElement('span');
+    info.textContent=`↔ ORIGEM ${ZONE_NAMES[origin]} (${from}) · ${visible} destino(s) disponíveis em toda a rede · azul = receber · cinza = indisponível · ESC cancela`;
+    hintEl.append(info);
+    if (recommendation) {
+      const fast=document.createElement('button');
+      fast.type='button';
+      fast.id='redirect-fast-route';
+      fast.className='redirect-fast-route';
+      fast.dataset.destination=String(recommendation);
+      fast.textContent=`↪ Usar ${ZONE_NAMES[recommendation]} (rota sugerida)`;
+      fast.title='Transferir imediatamente para uma zona monitorada com capacidade disponível.';
+      hintEl.append(fast);
+    }
+  } else if (hintEl && originMode) {
+    hintEl.textContent='↔ REDIRECIONAMENTO: selecione qualquer zona ativa como origem; depois escolha o destino destacado. ESC cancela.';
   }
+}
+
+// Laboratório de gêmeo digital: ações diferentes alteram o mesmo estado da rede.
+function updateTacticalUI() {
+  const now=Date.now();
+  for(const [id,end,normal] of [
+    ['btn-fortify',gameState.shieldCooldownUntil,'🛡 Blindar · B'],
+    ['btn-repair',gameState.repairCooldownUntil,`🔧 Reparar (${gameState.maintenanceKits}) · M`]]) {
+    const button=document.getElementById(id); if(!button)continue;
+    const left=Math.max(0,Math.ceil(((end||0)-now)/1000));
+    button.disabled=!!left || gameState.isAttentionBusy || gameState.isGameOver;
+    button.textContent=left ? `${id==='btn-fortify'?'🛡':'🔧'} ${left}s` : normal;
+  }
+  const cards=document.querySelectorAll('.game-zone-card');
+  cards.forEach(card=>{
+    const z=Number(card.dataset.zoneId);
+    let flag=card.querySelector('.twin-status-indicator');
+    if(!flag){flag=document.createElement('div');flag.className='twin-status-indicator';card.appendChild(flag);}
+    const shield=Math.ceil(((gameState.shieldUntil[z]||0)-now)/1000);
+    const repair=Math.ceil(((gameState.repairUntil[z]||0)-now)/1000);
+    flag.textContent=repair>0?`🔧 REPARO ${repair}s`:shield>0?`🛡 BLINDADO ${shield}s`:'';
+    flag.classList.toggle('hidden',!(repair>0||shield>0));
+  });
+
 }
 
 let isEventListenersSetup = false;
 function setupGameEventListeners() {
-  const btnScanSystem = document.getElementById('btn-scan-system');
-  if (btnScanSystem && !btnScanSystem.hasAttribute('data-scan-listener')) {
-    btnScanSystem.setAttribute('data-scan-listener', 'true');
-    btnScanSystem.addEventListener('click', () => {
-      revelarTelemetriaSobrecargas();
-    });
-  }
+  if (isEventListenersSetup) return; // Evita registrar atalhos duplicados após reiniciar.
 
   document.addEventListener('keydown', (e) => {
+    // Atalhos exclusivos da partida; não interferem na digitação em campos.
+    const gameScreen = document.getElementById('screen-game');
+    if (!gameScreen || gameScreen.classList.contains('hidden') || !gameState || gameState.isGameOver) return;
+    const focused = e.target;
+    if (focused && (focused.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(focused.tagName))) return;
+    if (!e.ctrlKey && !e.altKey && !e.metaKey && ['b','m'].includes(e.key.toLowerCase())) {
+      if(e.repeat) return;
+      const keyButtons = { b: 'btn-fortify', m: 'btn-repair' };
+      const actionButton = document.getElementById(keyButtons[e.key.toLowerCase()]);
+      if(actionButton && !actionButton.disabled) actionButton.click();
+      e.preventDefault(); return;
+    }
+    if (!e.ctrlKey && !e.altKey && !e.metaKey && (e.key === 'r' || e.key === 'R')) {
+      if (e.repeat) return;
+      const redirectButton = document.getElementById('btn-redirect');
+      if (gameState.pendingAction === 'redirect-origin' || gameState.pendingAction === 'redirect-target') {
+        cancelSelectionMode();
+        logEvent('ℹ Redirecionamento cancelado pelo teclado.', 'event-info');
+      } else if (!gameState.pendingAction && !gameState.isAttentionBusy && redirectButton && !redirectButton.disabled) {
+        redirectButton.click(); // Mesmo fluxo usado pelo botão, sem lógica duplicada.
+      }
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'Escape' || e.key === 'Esc') {
       if (gameState.pendingAction) {
         cancelSelectionMode();
@@ -972,15 +1415,29 @@ function setupGameEventListeners() {
     }
   });
 
-  if (isEventListenersSetup) return;
   const gameSection = document.getElementById('screen-game');
   if (!gameSection) return;
 
   gameSection.addEventListener('click', (e) => {
     if (gameState.isAttentionBusy || gameState.isGameOver) return;
 
+    const fastRoute=e.target.closest('#redirect-fast-route');
+    if (fastRoute && gameState.pendingAction === 'redirect-target') {
+      handleZoneSelection(Number(fastRoute.dataset.destination));
+      return;
+    }
     const actionBtn = e.target.closest('.btn-action');
     const zoneCard = e.target.closest('.game-zone-card');
+
+    // No redirecionamento, todo clique no cartão é uma seleção de zona,
+    // mesmo sobre a região dos botões de corte/gerador.
+    if (zoneCard && (gameState.pendingAction === 'redirect-origin' || gameState.pendingAction === 'redirect-target')) {
+      const zoneId = Number(zoneCard.dataset.zoneId);
+      gameState.selectedTelemetryZone = zoneId;
+      handleZoneSelection(zoneId);
+      updateTelemetryUI();
+      return;
+    }
 
     if (actionBtn) {
       const zoneId = parseInt(actionBtn.getAttribute('data-zone-id'), 10);
@@ -994,33 +1451,54 @@ function setupGameEventListeners() {
       return;
     }
 
-    if (zoneCard && gameState.pendingAction) {
+    if (e.target.closest('#telemetry-auto-focus')) {
+      gameState.selectedTelemetryZone = null;
+      updateTelemetryUI();
+      return;
+    }
+    if (zoneCard) {
       const zoneId = parseInt(zoneCard.getAttribute('data-zone-id'), 10);
-      handleZoneSelection(zoneId);
+      gameState.selectedTelemetryZone = zoneId;
+      if (gameState.pendingAction) handleZoneSelection(zoneId);
+      updateTelemetryUI();
+
     }
   });
 
+  const fortify = document.getElementById('btn-fortify');
+  const repair = document.getElementById('btn-repair');
+  if(fortify) fortify.addEventListener('click',()=>{
+    if(gameState.pendingAction === 'fortify'){ cancelSelectionMode(); return; }
+    startSelectionMode('fortify','🛡 Selecione zona ativa: proteção preventiva ou +tempo em uma emergência de 100%. ESC cancela.');
+  });
+  if(repair) repair.addEventListener('click',()=>{
+    if(gameState.pendingAction === 'repair'){ cancelSelectionMode(); return; }
+    startSelectionMode('repair','🔧 Escolha uma zona em BLACKOUT para enviar a equipe (reparo: 8s). ESC cancela.');
+  });
   const btnRedirect = document.getElementById('btn-redirect');
-  const btnRecalibrate = document.getElementById('btn-recalibrate');
 
   if (btnRedirect) {
     btnRedirect.addEventListener('click', () => {
-      if (gameState.isAttentionBusy) return;
-      startSelectionMode('redirect-origin', "Selecione a zona de ORIGEM da carga (pressione ESC para cancelar)...");
+      if (gameState.isAttentionBusy || gameState.isGameOver) return;
+      if (gameState.pendingAction === 'redirect-origin' || gameState.pendingAction === 'redirect-target') {
+        cancelSelectionMode(); // Segundo clique no botão cancela e limpa a seleção.
+        return;
+      }
+      // Cada operação começa vazia: origem e destino serão definidos por cliques novos.
+      startSelectionMode('redirect-origin', 'Selecione a zona de origem e, depois, a zona de destino. ESC cancela.');
+      refreshRedirectGuidance();
     });
   }
 
-  if (btnRecalibrate) {
-    btnRecalibrate.addEventListener('click', () => {
-      if (gameState.isAttentionBusy) return;
-      startSelectionMode('recalibrate-origin', "Selecione a zona com sensor para mover (pressione ESC para cancelar)...");
-    });
-  }
 
   isEventListenersSetup = true;
 }
 
 function executeCutAction(zoneId) {
+  if (gameState.status[zoneId] === 'critical' || gameState.loads[zoneId] >= 100) {
+    logEvent(`🚨 ${ZONE_NAMES[zoneId]} em SOBRECARGA: use gerador!`, 'event-info');
+    return;
+  }
   const now = Date.now();
   if (gameState.status[zoneId] === 'blackout') return;
   if (gameState.cutCooldowns[zoneId] && gameState.cutCooldowns[zoneId] > now) return;
@@ -1037,6 +1515,8 @@ function executeCutAction(zoneId) {
   const wasRisky = currentLoad >= 70 && !wasCritical;
 
   gameState.loads[zoneId] = Math.max(0, currentLoad - gameState.config.cutReduction);
+  gameState.servicePenalty += 3;
+  addScore(-3);
   
   gameState.cutCooldowns[zoneId] = now + gameState.config.cutCooldownMs;
 
@@ -1058,6 +1538,32 @@ function executeCutAction(zoneId) {
   updateGameUI();
 }
 
+
+// Blindagem funciona de duas maneiras: preventiva (reduz crescimento)
+// ou emergencial (extensão única do prazo, sem reduzir carga).
+function executeShieldAction(zoneId) {
+  const now = Date.now();
+  if (gameState.isGameOver || gameState.status[zoneId] === 'blackout' || now < gameState.shieldCooldownUntil) return false;
+  const critical = gameState.status[zoneId] === 'critical' && gameState.loads[zoneId] >= 100;
+  if (critical) {
+    if (gameState.criticalShieldUsed[zoneId]) {
+      logEvent('❌ Esta crise já recebeu o tempo extra da blindagem.', 'event-info');
+      return false;
+    }
+    gameState.graceSecondsLeft[zoneId] += gameState.config.shieldCriticalBonusSec;
+    gameState.criticalShieldUsed[zoneId] = true;
+    // Sem efeito de queda de carga nem proteção que apague a crise.
+    logEvent(`🛡 Blindagem emergencial: ${ZONE_NAMES[zoneId]} ganhou +${gameState.config.shieldCriticalBonusSec}s antes do colapso.`, 'event-info');
+  } else {
+    gameState.shieldUntil[zoneId] = now + 14000;
+    logEvent(`🛡 Blindagem preventiva: ${ZONE_NAMES[zoneId]} protegida contra crescimento por 14s.`, 'event-info');
+  }
+  gameState.shieldCooldownUntil = now + 24000;
+  gameState.totalActionsCount++;
+  updateGameUI();
+  return true;
+}
+
 function executeGeneratorAction(zoneId) {
   const now = Date.now();
   if (gameState.status[zoneId] === 'blackout') return;
@@ -1074,14 +1580,15 @@ function executeGeneratorAction(zoneId) {
   const wasCritical = gameState.status[zoneId] === 'critical' || currentLoad >= 100;
   const wasRisky = currentLoad >= 70 && !wasCritical;
 
-  gameState.loads[zoneId] = gameState.initialLoads[zoneId];
-
-  if (wasCritical) {
+  // Gerador: amortecimento temporário; não elimina toda a demanda nem apaga a previsão.
+  gameState.loads[zoneId] = Math.max(0, currentLoad - gameState.config.generatorReduction);
+  gameState.emergencyOverloads[zoneId] = false;
+  gameState.criticalShieldUsed[zoneId] = false;
+  gameState.generatorProtectionUntil[zoneId] = now + 9000;
+  if (gameState.loads[zoneId] < 100 && wasCritical) {
     gameState.status[zoneId] = gameState.loads[zoneId] >= 70 ? 'alert' : 'calm';
     gameState.graceSecondsLeft[zoneId] = 0;
   }
-
-  gameState.overloadTimers[zoneId] = Math.floor(Math.random() * 20) + 40;
 
   const cooldownMs = gameState.config.generatorCooldownMs || 3000;
   gameState.globalGeneratorCooldownUntil = now + cooldownMs;
@@ -1095,12 +1602,15 @@ function executeGeneratorAction(zoneId) {
     gameState.preventiveActionsCount++;
   }
 
-  logEvent(`⚡ Gerador de emergência acionado na ${ZONE_NAMES[zoneId]}! (Cooldown global: ${cooldownMs / 1000}s)`);
+  logEvent(`⚡ Gerador em ${ZONE_NAMES[zoneId]}: -${gameState.config.generatorReduction} de carga e proteção por 9s. Recarga: ${cooldownMs / 1000}s.`);
   
   updateGameUI();
 }
 
 function startSelectionMode(actionType, hintMessage) {
+  if (gameState.pendingAction === 'redirect-origin' || gameState.pendingAction === 'redirect-target') {
+    cancelSelectionMode(); // Não carregar origem/destino para outro modo de ação.
+  }
   gameState.pendingAction = actionType;
   gameState.selectedOriginId = null;
 
@@ -1111,27 +1621,55 @@ function startSelectionMode(actionType, hintMessage) {
   }
 
   document.querySelectorAll('.game-zone-card').forEach(c => c.classList.remove('selected-target'));
+  refreshRedirectGuidance();
 }
 
 function handleZoneSelection(zoneId) {
+  if (gameState.pendingAction === 'fortify') {
+    if(executeShieldAction(zoneId)) cancelSelectionMode();
+    return;
+  }
+  if (gameState.pendingAction === 'repair') {
+    if(gameState.status[zoneId] !== 'blackout' || gameState.repairUntil[zoneId]) {logEvent('❌ Reparos só em zonas apagadas e sem equipe ativa.');return;}
+    if(gameState.maintenanceKits <= 0){logEvent('❌ Equipes esgotadas. Você dispõe de 3 reparos por partida.');return;}
+    if(Object.values(gameState.repairUntil).some(end=>end>Date.now())){logEvent('❌ A equipe de manutenção já está ocupada.');return;}
+    gameState.maintenanceKits--; gameState.repairKitsSpent[zoneId] = true;
+    gameState.repairUntil[zoneId] = Date.now() + 8000;
+    gameState.repairCooldownUntil = Date.now() + 18000;
+    gameState.totalActionsCount++;
+    addScore(-35);
+    logEvent(`🔧 Equipe enviada para ${ZONE_NAMES[zoneId]}: retorno em 8s; ${gameState.maintenanceKits} equipes restantes.`);
+    cancelSelectionMode();updateGameUI();return;
+  }
   const hintEl = document.getElementById('selection-hint');
 
   if (gameState.pendingAction === 'redirect-origin') {
-    if (gameState.status[zoneId] === 'blackout') return;
+    if (gameState.status[zoneId] === 'blackout' || gameState.loads[zoneId] < 1) {
+      logEvent('Selecione uma origem energizada, inclusive em sobrecarga, com alguma carga para enviar.', 'event-info');
+      return;
+    }
 
-    gameState.selectedOriginId = zoneId;
-    gameState.pendingAction = 'redirect-target';
-
-    const card = document.querySelector(`.game-zone-card[data-zone-id="${zoneId}"]`);
-    if (card) card.classList.add('selected-target');
-
-    if (hintEl) hintEl.textContent = "Selecione a zona de DESTINO (não pode estar crítica)...";
+    setRedirectOrigin(zoneId);
   } else if (gameState.pendingAction === 'redirect-target') {
     const originId = gameState.selectedOriginId;
-    if (zoneId === originId) return;
+    if (zoneId === originId) {
+      // Clique novamente na origem permite trocar a origem sem recomeçar.
+      gameState.pendingAction = 'redirect-origin';
+      gameState.selectedOriginId = null;
+      refreshRedirectGuidance();
+      return;
+    }
+    const amount = redirectTransferAmount(originId, zoneId);
+    if (!amount) {
+      logEvent(`❌ ${ZONE_NAMES[zoneId]} está indisponível ou sem espaço seguro para receber carga. Escolha uma zona azul.`, 'event-info');
+      refreshRedirectGuidance();
+      return;
+    }
 
-    if (gameState.status[zoneId] === 'critical' || gameState.status[zoneId] === 'blackout' || gameState.loads[zoneId] >= 100) {
-      logEvent(`❌ Redirecionamento inválido: ${ZONE_NAMES[zoneId]} está em alerta crítico.`);
+    // Revalide a origem no instante da transferência (pode ter sofrido blackout
+    // enquanto o jogador escolhia o destino).
+    if (gameState.status[originId] === 'blackout' || gameState.loads[originId] < amount) {
+      logEvent('❌ Origem indisponível para redirecionamento.', 'event-info');
       cancelSelectionMode();
       return;
     }
@@ -1140,8 +1678,18 @@ function handleZoneSelection(zoneId) {
     const wasCritical = gameState.status[originId] === 'critical' || currentLoad >= 100;
     const wasRisky = currentLoad >= 70 && !wasCritical;
 
-    gameState.loads[originId] = Math.max(0, gameState.loads[originId] - 15);
-    gameState.loads[zoneId] = Math.min(100, gameState.loads[zoneId] + 15);
+    gameState.loads[originId] = Math.max(0, currentLoad - amount);
+    gameState.loads[zoneId] += amount; // capacidade segura validada na confirmação
+
+    // Em uma crise instantânea a 100%, só uma transferência integral
+    // de 15 unidades pode substituir o gerador.
+    if (wasCritical && gameState.loads[originId] < 100) {
+      gameState.emergencyOverloads[originId] = false;
+      gameState.criticalShieldUsed[originId] = false;
+      gameState.graceSecondsLeft[originId] = 0;
+      gameState.status[originId] = gameState.loads[originId] >= 70 ? 'alert' : 'calm';
+      logEvent(`✅ SOBRECARGA CONTROLADA: ${ZONE_NAMES[originId]} foi aliviada por redirecionamento.`, 'event-info');
+    }
 
     gameState.totalActionsCount++;
     
@@ -1152,38 +1700,10 @@ function handleZoneSelection(zoneId) {
       gameState.preventiveActionsCount++;
     }
 
-    logEvent(`↔ Redirecionamento: ${ZONE_NAMES[originId]} (-15) ➔ ${ZONE_NAMES[zoneId]} (+15).`);
+    logEvent(`↔ Redirecionamento: ${ZONE_NAMES[originId]} (-${amount}) ➔ ${ZONE_NAMES[zoneId]} (+${amount})${wasCritical ? ' · crise encerrada' : ''}.`);
     cancelSelectionMode();
-    triggerAttentionCooldown();
-  } else if (gameState.pendingAction === 'recalibrate-origin') {
-    if ((window.zoneLevels[zoneId] || 0) <= 0) {
-      logEvent(`❌ Seleção inválida: ${ZONE_NAMES[zoneId]} não possui sensor.`);
-      cancelSelectionMode();
-      return;
-    }
-
-    gameState.selectedOriginId = zoneId;
-    gameState.pendingAction = 'recalibrate-target';
-
-    const card = document.querySelector(`.game-zone-card[data-zone-id="${zoneId}"]`);
-    if (card) card.classList.add('selected-target');
-
-    if (hintEl) hintEl.textContent = "Selecione a zona de DESTINO do sensor...";
-  } else if (gameState.pendingAction === 'recalibrate-target') {
-    const originId = gameState.selectedOriginId;
-    if (zoneId === originId) return;
-
-    window.zoneLevels[originId]--;
-
-    gameState.recalibrations.push({
-      origin: originId,
-      target: zoneId,
-      secondsLeft: 10
-    });
-
-    logEvent(`📡 Recalibração iniciada: ${ZONE_NAMES[originId]} ➔ ${ZONE_NAMES[zoneId]} (10s em trânsito).`);
-    cancelSelectionMode();
-    triggerAttentionCooldown();
+    updateGameUI();
+    triggerAttentionCooldown(650); // Apenas 0,65s; redirecionamento precisa ser útil em crises.
   }
 }
 
@@ -1195,10 +1715,13 @@ function cancelSelectionMode() {
   if (hintEl) hintEl.classList.add('hidden');
 
   document.querySelectorAll('.game-zone-card').forEach(c => c.classList.remove('selected-target'));
+  refreshRedirectGuidance();
 }
 
 function endGame(isVictory) {
   gameState.isGameOver = true;
+  const dispatchBox = document.getElementById('dispatch-mission');
+  if (dispatchBox) dispatchBox.classList.add('hidden');
   if (gameState.gameInterval) clearInterval(gameState.gameInterval);
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
   if (gameState.eventTimeout) clearTimeout(gameState.eventTimeout);

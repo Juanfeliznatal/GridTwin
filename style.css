@@ -1094,3 +1094,817 @@ ul.hidden {
         width: 100%;
     }
 }
+/* GridTwin v1.1: painel estratégico integrado ao estilo original */
+.grid-strategy-panel { border: 1px solid rgba(53,211,241,.34); border-radius: 12px; padding: 12px 16px; margin: 10px 0 16px; background: rgba(6,24,38,.66); text-align: center; }
+.grid-strategy-title { color: #65e9f7; font-weight: 800; letter-spacing: .09em; margin: 0 0 7px; }
+.grid-strategy-help { color: #b9cdd7; font-size: .83rem; line-height: 1.5; margin: 5px 0; }
+.grid-strategy-button { background: #103a4a; border: 1px solid #35d3f1; border-radius: 8px; color: #e2fcff; font-weight: 700; padding: 10px 18px; cursor: pointer; margin: 7px 0; }
+.grid-strategy-button:hover:not(:disabled) { background: #176078; }
+.grid-strategy-button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* GridTwin v1.2: destinos de redistribuição e dados legíveis */
+.game-zone-card.redirect-possible {outline: 2px solid #38d9ed; box-shadow: 0 0 16px rgba(56,217,237,.33); cursor:pointer;}
+.game-zone-card.redirect-unavailable {opacity: .62;}
+.redirect-preview {display:block;margin-top:6px;padding:5px 7px;border-radius:5px;background:rgba(15,94,110,.72);color:#b9faff;font-size:.74rem;font-weight:700;}
+.predictions-list li.telemetry-heading {color:#70d7f2;font-weight:800;letter-spacing:.02em;padding-bottom:9px;border-bottom:1px solid #24536a;}
+.zone-prediction {min-height:1.2em; font-size:.75rem; color:#7fd9ed;}
+
+/* GridTwin v1.3: área preditiva prioritária e frente climática móvel */
+#screen-game .game-sidebar { width: min(445px, 34vw); max-height: 75vh; padding: 1rem 1.1rem; gap: .85rem; overflow: hidden; }
+#screen-game .game-sidebar .sidebar-section:first-child { flex: 3 1 0; min-height: 235px; }
+#screen-game .game-sidebar .sidebar-section:nth-child(2) { flex: 1 1 0; min-height: 80px; }
+#screen-game .game-sidebar .sidebar-section { gap: .35rem; }
+#screen-game .game-sidebar .sidebar-subtitle { margin-bottom: .35rem; }
+#screen-game .predictions-list { font-size: .94rem; line-height: 1.35; gap: .55rem; min-height: 0; }
+#screen-game .predictions-list li { padding: .28rem .3rem; border-bottom: 1px solid rgba(56,189,248,.12); }
+#screen-game .events-feed { font-size: .78rem; gap: .4rem; min-height: 0; }
+.storm-monitor { display:flex; flex-direction:column; gap:5px; border:1px solid rgba(251,191,36,.55); border-radius:8px; background:rgba(83,48,12,.22); padding:10px 12px; font-size:.88rem; color:#fde68a; }
+.storm-monitor strong { font-size: .94rem; }
+.storm-monitor span { color:#f5d09c; }
+#screen-game .game-zone-card.storm-active-zone { box-shadow: 0 0 0 2px rgba(251,191,36,.85), 0 0 25px rgba(251,191,36,.24); }
+#screen-game .game-zone-card.storm-next-zone:not(.storm-active-zone) { outline:2px dashed rgba(125,211,252,.7); outline-offset:2px; }
+@media (max-width: 900px) { #screen-game .game-sidebar { width:100%; max-height:55vh; } }
+
+
+/* ==========================================================================
+   GridTwin v1.4 — Telemetria legível, comandos compactos e cooldowns claros.
+   ========================================================================== */
+#screen-game { gap: 0.85rem; }
+#screen-game .prep-body { gap: 1.15rem; min-height:0; }
+#screen-game .zone-grid { gap: .9rem; }
+#screen-game .game-sidebar {
+    box-sizing:border-box; width: min(465px, 39vw); flex: 0 0 min(465px, 39vw);
+    min-width: 315px; max-height: none; min-height:0;
+    border: 1px solid rgba(61,180,226,.55); border-radius:12px;
+    padding: .85rem 1rem; gap:.55rem; overflow-y:auto;
+    background:rgba(3,14,26,.94);
+}
+#screen-game .game-sidebar .telemetry-section {
+    flex:none; min-height:0; overflow:visible; gap:.45rem;
+}
+#screen-game .telemetry-title-row {display:flex;align-items:center;justify-content:space-between;gap:8px;}
+#screen-game .game-sidebar .sidebar-subtitle { font-size:1.65rem; padding:0; margin:0; border:none; }
+#screen-game .telemetry-online { color:#62e6c0; font-size:.67rem; font-weight:800; white-space:nowrap; letter-spacing:.06em; }
+#screen-game .telemetry-explainer {font-size:.72rem;color:#a5bcd0;line-height:1.4; margin:0;}
+#screen-game .storm-monitor {padding:7px 10px; gap:1px; font-size:.78rem;}
+#screen-game .storm-monitor strong {font-size:.82rem;}
+#screen-game .telemetry-grid {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px;
+    overflow:visible; min-height:0; margin:3px 0 0; padding:0;
+}
+#screen-game .telemetry-zone {
+    min-width:0; min-height:97px; text-align:left; cursor:pointer;
+    font:inherit; display:flex; flex-direction:column; gap:5px;
+    padding:9px; border:1px solid #29465d; border-radius:8px;
+    background:rgba(9,28,44,.97); color:#e5f4ff;
+    transition:background .12s ease,border-color .12s ease;
+}
+#screen-game .telemetry-zone:hover,
+#screen-game .telemetry-zone:focus-visible { border-color:#6bd9fc; outline:1px solid #6bd9fc; }
+#screen-game .telemetry-zone.is-focused {border-color:#5eead4;background:#133645;box-shadow:inset 0 0 0 1px rgba(94,234,212,.28);}
+#screen-game .telemetry-zone-head,.telemetry-readout {display:flex;justify-content:space-between;gap:5px;align-items:baseline;min-width:0;}
+#screen-game .telemetry-zone-head strong {font-family:'Space Mono',monospace;font-size:.74rem;color:#d6f3ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#screen-game .telemetry-sensor {font-size:.60rem;color:#9cbacf;white-space:nowrap;}
+#screen-game .telemetry-readout b {font-size:1.04rem;line-height:1;color:#f6feff;}
+#screen-game .telemetry-risk {font-size:.61rem;font-weight:800;text-align:right;color:#8adaba;}
+#screen-game .telemetry-zone[data-risk="alert"] .telemetry-risk {color:#f6d273;}
+#screen-game .telemetry-zone[data-risk="critical"] .telemetry-risk,
+#screen-game .telemetry-zone[data-risk="blackout"] .telemetry-risk {color:#ff8787;}
+#screen-game .telemetry-zone[data-risk="blind"] .telemetry-risk {color:#93a6b7;}
+#screen-game .telemetry-meter {height:5px;background:#0b1018;border-radius:6px;overflow:hidden;}
+#screen-game .telemetry-meter-fill {display:block;height:100%;width:0;background:#39cdbf;transition:width .4s;}
+#screen-game .telemetry-zone[data-risk="alert"] .telemetry-meter-fill {background:#f5b942;}
+#screen-game .telemetry-zone[data-risk="critical"] .telemetry-meter-fill {background:#fa6471;}
+#screen-game .telemetry-forecast {font-size:.64rem;line-height:1.2;color:#bbd0e2;white-space:normal;}
+#screen-game .telemetry-focus {border:1px solid #325d6e;border-radius:9px;padding:10px 12px;background:rgba(8,38,52,.94);display:flex;flex-direction:column;gap:6px;}
+#screen-game .telemetry-focus-header {display:flex;justify-content:space-between;gap:8px;align-items:center;}
+#screen-game .telemetry-focus-header strong {color:#7fe4f5;font-size:.83rem;}
+#screen-game #telemetry-auto-focus {font-family:inherit;color:#c4f0f9;background:#173a49;border:1px solid #437a8c;border-radius:5px;cursor:pointer;padding:5px 8px;font-size:.65rem;}
+#screen-game #telemetry-auto-focus.is-auto {border-color:#5eead4;color:#5eead4;}
+#screen-game .telemetry-focus-status {font-size:.78rem;font-weight:800;color:#8bdac7;}
+#screen-game .telemetry-focus-status.risk-alert {color:#f2cb70;}
+#screen-game .telemetry-focus-status.risk-critical,
+#screen-game .telemetry-focus-status.risk-blackout {color:#ff8c91;}
+#screen-game .telemetry-focus-detail {font-size:.73rem;line-height:1.43;color:#d1e5ef;}
+#screen-game .telemetry-focus-action {font-size:.69rem;line-height:1.5;color:#9adacf;border-top:1px solid rgba(125,211,252,.19);padding-top:6px;}
+#screen-game .events-details {flex:none;min-height:0;max-height:35%;border:1px solid #29465d;border-radius:8px;overflow:hidden;}
+#screen-game .events-details summary {cursor:pointer;list-style-position:inside;padding:8px 10px;color:#b8d8eb;font-size:.75rem;font-weight:700;}
+#screen-game #event-count {color:#70d7f2;margin-left:4px;}
+#screen-game .events-hint {color:#7890a7;font-weight:400;}
+#screen-game .events-feed {max-height:170px;overflow-y:auto;display:block;padding:3px 9px 9px;margin:0;font-size:.70rem;}
+#screen-game .events-feed li {padding:4px 5px;margin-bottom:3px;line-height:1.4;}
+#screen-game .game-action-panel { gap: .35rem; margin-top:0; padding-top:.55rem; }
+#screen-game .game-command-bar {display:flex;justify-content:center;align-items:center;gap:10px;width:100%;flex-wrap:wrap;}
+#screen-game .grid-strategy-button {margin:0;border-radius:7px;min-height:37px;padding:8px 12px;font-size:.81rem;white-space:nowrap;}
+#screen-game .telemetry-panel {width:auto;}
+#screen-game #btn-scan-system {box-shadow:none;border-width:1px;border-radius:7px;padding:8px 12px;font-size:.81rem;min-height:37px;white-space:nowrap;}
+#screen-game .command-help {color:#829caf;font-size:.65rem;}
+#screen-game .selection-hint {font-size:.80rem;line-height:1.5;text-align:center;margin:0;}
+#screen-game .btn-action.on-cooldown {font-size:.76rem; opacity:.65;}
+#screen-game .zone-prediction {margin-bottom:.35rem;}
+#screen-game .zone-card {min-height:150px;padding:.75rem;}
+#screen-game .zone-icon {width:54px;height:54px;margin-bottom:2px;}
+#screen-game .zone-load-bar {margin:.45rem 0 .2rem;}
+@media (max-width:1050px) {
+  #screen-game { padding:1.1rem; }
+  #screen-game .game-sidebar {width:min(405px,39vw);flex-basis:min(405px,39vw);min-width:290px;}
+  #screen-game .telemetry-zone {min-height:102px;padding:7px;}
+  #screen-game .zone-grid {gap:.6rem;}
+}
+@media (max-width:900px) {
+  #screen-game {overflow-y:auto;height:100dvh;}
+  #screen-game .prep-body {flex-direction:column;flex:0 0 auto;}
+  #screen-game .zone-grid {grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;flex:none;}
+  #screen-game .game-sidebar {width:100%;max-height:none;min-width:0;flex:none;overflow:visible;}
+  #screen-game .events-details {max-height:none;}
+}
+@media (max-width:620px) {
+  #screen-game .zone-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #screen-game .game-command-bar {flex-direction:column;}
+  #screen-game .command-help {display:none;}
+}
+@media (prefers-reduced-motion: reduce) {
+  #screen-game .telemetry-zone, #screen-game .telemetry-meter-fill {transition:none;}
+}
+
+/* v1.4 — revisão final: todas as seis zonas devem caber juntas */
+#screen-game .game-header {
+  flex-direction: row; justify-content: space-between; align-items: center;
+  min-height:0; flex:0 0 auto; flex-wrap:wrap; font-size:1.5rem;
+  padding-bottom:.5rem; gap:.5rem 1.25rem;
+}
+#screen-game .zone-grid {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:min-content;
+  align-content:start;
+}
+#screen-game .game-zone-card {
+  height:clamp(205px,24.5vh,235px); min-height:205px; overflow:hidden;
+}
+#screen-game .game-sidebar .sidebar-section:first-child {
+  flex:0 0 auto; min-height:0; overflow:visible;
+}
+#screen-game .telemetry-zone {min-height:79px;gap:3px;padding:7px;}
+#screen-game .telemetry-zone-head strong {font-size:.73rem;}
+#screen-game .telemetry-forecast {font-size:.62rem;}
+#screen-game .telemetry-focus {gap:4px;padding:8px 10px;}
+#screen-game .telemetry-focus-detail {line-height:1.35;}
+#screen-game .game-sidebar {overflow-y:auto;}
+@media(max-width:900px){
+  #screen-game .game-zone-card {height:220px;}
+  #screen-game .game-sidebar {overflow:visible;}
+}
+/* Legibilidade final em notebooks: comandos das seis zonas sempre visíveis. */
+#screen-game .game-zone-card {height:clamp(232px,27vh,250px);min-height:232px;}
+#screen-game .telemetry-explainer {display:none;}
+#screen-game .telemetry-zone {min-height:69px;padding:5px 7px;gap:2px;}
+#screen-game .telemetry-grid {gap:6px;}
+#screen-game .telemetry-zone-head strong {font-size:.72rem;}
+#screen-game .telemetry-readout b {font-size:.96rem;}
+#screen-game .telemetry-forecast {font-size:.61rem;}
+#screen-game .telemetry-focus {padding:6px 9px;gap:3px;}
+#screen-game .telemetry-focus-detail {font-size:.68rem;line-height:1.25;}
+#screen-game .telemetry-focus-action {font-size:.65rem;padding-top:4px;line-height:1.3;}
+#screen-game .game-sidebar {gap:.4rem;}
+#screen-game .storm-monitor {padding:5px 8px;}
+#screen-game .game-sidebar .telemetry-section {gap:.35rem;}
+@media (max-width:900px) {
+  #screen-game .game-zone-card {height:232px;}
+}
+
+/* ======================================================================
+   GridTwin 1.5 — leitura sem recortes e acesso rápido durante a simulação.
+   Preserva cores, tipografia e composição da versão 1.4.
+   ====================================================================== */
+#screen-game {
+  height:100dvh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  scrollbar-gutter:stable;
+  padding-bottom:20px;
+}
+#screen-game .prep-body {flex:0 0 auto;align-items:flex-start;min-width:0;}
+#screen-game .zone-grid {overflow:visible;min-width:0;flex:1 1 0;padding-right:2px;}
+/* Antes a altura fixa + overflow:hidden ocultavam previsões e comandos. */
+#screen-game .game-zone-card {
+  height:auto;
+  min-height:232px;
+  overflow:visible;
+  gap:4px;
+}
+#screen-game .zone-prediction {overflow-wrap:anywhere;line-height:1.3;}
+#screen-game .zone-quick-actions {flex-shrink:0;}
+#screen-game .game-sidebar {
+  position:relative;
+  overflow:visible;
+  max-height:none;
+  min-width:0;
+}
+#screen-game .telemetry-grid {gap:9px;}
+#screen-game .telemetry-zone {
+  min-height:96px;
+  padding:10px;
+  gap:6px;
+  overflow:visible;
+}
+#screen-game .telemetry-zone-head strong {font-size:.82rem;white-space:normal;overflow:visible;line-height:1.22;}
+#screen-game .telemetry-sensor {font-size:.69rem;}
+#screen-game .telemetry-readout b {font-size:1.13rem;}
+#screen-game .telemetry-risk {font-size:.69rem;}
+#screen-game .telemetry-forecast {font-size:.72rem;line-height:1.35;overflow-wrap:anywhere;}
+#screen-game .telemetry-focus {padding:12px;gap:7px;}
+#screen-game .telemetry-focus-detail {font-size:.78rem;line-height:1.5;overflow-wrap:anywhere;}
+#screen-game .telemetry-focus-action {font-size:.74rem;line-height:1.5;}
+#screen-game .telemetry-focus-status {font-size:.85rem;line-height:1.35;}
+#screen-game .game-command-bar kbd,
+#screen-game .shortcut-key {font-family:inherit;font-size:.75rem;padding:2px 5px;border:1px solid rgba(125,211,252,.5);border-radius:4px;color:#aeeaff;background:rgba(9,36,54,.9);}
+#screen-game .selection-hint:not(.hidden) {border:1px solid rgba(56,189,248,.5);border-radius:8px;padding:7px 12px;background:rgba(4,31,47,.94);font-weight:700;}
+#screen-game .game-action-panel {position:sticky;bottom:0;z-index:20;background:linear-gradient(180deg,rgba(5,10,16,.97),rgba(5,10,16,.99));padding:8px 10px;border-top:1px solid rgba(56,189,248,.25);}
+@media (max-width:1150px) {
+  #screen-game .prep-body {gap:12px;}
+  #screen-game .zone-grid {gap:9px;}
+  #screen-game .game-sidebar {width: min(405px,38vw);flex:0 0 min(405px,38vw);}
+  #screen-game .telemetry-zone {padding:8px;}
+}
+@media(max-width:900px) {
+  #screen-game .prep-body {flex-direction:column;}
+  #screen-game .zone-grid {width:100%;flex:none;}
+  #screen-game .game-sidebar {width:100%;max-width:none;flex:none;}
+  #screen-game .game-zone-card {min-height:220px;}
+  #screen-game .telemetry-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media(max-width:620px) {
+  #screen-game .zone-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #screen-game .telemetry-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #screen-game .game-zone-card {min-height:220px;}
+}
+
+
+/* ======================================================================
+   GridTwin v1.7 — orçamento compacto com manual em painel lateral rolável.
+   A tela de jogo preserva integralmente os estilos anteriores.
+   ====================================================================== */
+#screen-preparation {
+  height:100vh;
+  height:100dvh;
+  width:100%;
+  min-width:0;
+  padding:clamp(10px,1.9vh,22px) clamp(12px,2.3vw,34px);
+  gap:clamp(8px,1.3vh,14px);
+  overflow:hidden;
+}
+#screen-preparation .prep-header {
+  flex:0 0 auto;
+  min-height:0;
+  gap:0;
+}
+#screen-preparation .prep-title {
+  font-size:clamp(1.65rem,2.5vw,2.1rem);
+  margin-bottom:0;
+  line-height:1.1;
+}
+#screen-preparation .difficulty-selector {
+  margin:5px 0 4px;
+  gap:9px;
+  flex-wrap:wrap;
+}
+#screen-preparation .btn-diff {padding:4px 12px; font-size:1.1rem;}
+#screen-preparation .budget-counter {font-size:1.17rem;line-height:1.25;}
+#screen-preparation .prep-body {
+  display:flex;
+  flex-direction:row;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  align-items:stretch;
+  gap:clamp(10px,1.6vw,22px);
+}
+#screen-preparation .zone-grid {
+  flex:1 1 0;
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:minmax(166px,1fr);
+  align-content:stretch;
+  gap:clamp(8px,1.3vh,13px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:3px 5px 5px 2px;
+  scrollbar-gutter:stable;
+}
+#screen-preparation .zone-card {
+  min-width:0;
+  min-height:166px;
+  padding:clamp(7px,1.2vh,12px);
+  gap:3px;
+  overflow:visible;
+}
+#screen-preparation .zone-name {
+  height:auto;
+  min-height:2.3em;
+  font-size:clamp(.72rem,.9vw,.86rem);
+  line-height:1.2;
+  margin:0;
+}
+#screen-preparation .zone-icon {
+  width:clamp(38px,6.5vh,65px);
+  height:clamp(38px,6.5vh,65px);
+  margin:0;
+}
+#screen-preparation .zone-indicator {
+  height:15px;flex-basis:15px;
+  margin:3px 0;
+}
+#screen-preparation .zone-level-label {margin:0;font-size:.77rem;}
+#screen-preparation .zone-controls {padding:5px 4px;gap:8px;}
+#screen-preparation .btn-sensor {width:39px;height:31px;font-size:1.4rem;}
+#screen-preparation .prep-sidebar {
+  flex:0 0 clamp(280px,29vw,385px);
+  width:clamp(280px,29vw,385px);
+  max-width:38%;
+  min-width:0;
+  min-height:0;
+  max-height:none;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:clamp(12px,1.6vw,20px);
+  scrollbar-gutter:stable;
+}
+#screen-preparation .prep-sidebar .sidebar-info-title {font-size:1.55rem;margin-bottom:.65rem;}
+#screen-preparation .prep-sidebar .sidebar-intro {font-size:.84rem;line-height:1.5;margin-bottom:.9rem;}
+#screen-preparation .prep-sidebar .mechanics-info {padding:.75rem;margin-bottom:.9rem;}
+#screen-preparation .prep-sidebar .mechanics-info p,
+#screen-preparation .prep-sidebar .mechanics-list {font-size:.78rem;line-height:1.5;}
+#screen-preparation .prep-sidebar .sidebar-status-item {font-size:.8rem;margin-bottom:.6rem;}
+#screen-preparation .prep-action {
+  flex:0 0 auto;
+  margin:0;
+  padding:0 3px 3px;
+  align-items:center;
+  gap:3px;
+}
+#screen-preparation .btn-start {
+  font-size:clamp(1.3rem,2.1vw,1.85rem);
+  padding:5px clamp(16px,2.5vw,36px);
+  line-height:1.1;
+}
+@media(max-height:670px) and (min-width:761px) {
+  #screen-preparation .zone-grid {grid-auto-rows:minmax(155px,1fr);}
+  #screen-preparation .zone-card {min-height:155px;}
+  #screen-preparation .zone-icon {width:40px;height:40px;}
+  #screen-preparation .prep-header {gap:0;}
+}
+/* Somente em telas estreitas o painel passa abaixo da grade; a página pode
+   rolar, mantendo todos os controles alcançáveis com zoom em 100%. */
+@media(max-width:760px) {
+  #screen-preparation {overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;}
+  #screen-preparation .prep-body {flex:0 0 auto;flex-direction:column;gap:12px;}
+  #screen-preparation .zone-grid {
+    flex:none;width:100%;overflow:visible;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-auto-rows:minmax(159px,auto);
+    padding:2px;
+  }
+  #screen-preparation .prep-sidebar {
+    flex:none;width:100%;max-width:none;height:auto;
+    max-height:clamp(180px,32vh,300px);
+    overflow-y:auto;
+  }
+  #screen-preparation .prep-action {padding-bottom:12px;}
+}
+@media(max-width:500px) {
+  #screen-preparation .zone-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  #screen-preparation .prep-title {font-size:1.65rem;}
+  #screen-preparation .zone-name {font-size:.72rem;}
+  #screen-preparation .difficulty-selector {gap:4px;}
+  #screen-preparation .btn-diff {font-size:1rem;padding:4px 7px;}
+}
+/* Comunicação opcional da central: não obstrui telemetria nem controles. */
+#screen-game .dispatch-mission {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  border:1px solid rgba(94,234,212,.48);
+  border-radius:7px;
+  padding:7px 10px;
+  color:#d2f8ed;
+  background:rgba(6,54,54,.44);
+  font-size:.74rem;
+  line-height:1.4;
+}
+#screen-game .dispatch-mission.hidden {display:none;}
+#screen-game .dispatch-mission-head {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  color:#8ceedd;font-size:.72rem;font-weight:700;
+}
+#screen-game .dispatch-mission-time {color:#ffe6a6;white-space:nowrap;}
+#screen-game .dispatch-mission-desc {overflow-wrap:anywhere;}
+
+/* ======================================================================
+   v1.8 — Evita a expansão dos cartões sobre as bordas do orçamento.
+   Mantém o destaque cromático, sem zoom nem informações recortadas no hover.
+   ====================================================================== */
+#screen-preparation .zone-card {
+  transform: none;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+#screen-preparation .zone-card:hover,
+#screen-preparation .zone-card:focus-within {
+  transform: none;
+  border-color: #5eead4;
+  box-shadow: inset 0 0 0 1px rgba(94,234,212,.3), 0 0 8px rgba(94,234,212,.1);
+}
+#screen-preparation .zone-grid {
+  overflow-x: hidden;
+  padding-left: 5px;
+  padding-right: 8px;
+}
+#screen-preparation .prep-sidebar,
+#screen-preparation .prep-sidebar * {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+#screen-preparation .btn-sensor:hover:not(:disabled) {
+  transform: none;
+}
+#screen-preparation .btn-sensor:focus-visible,
+#screen-preparation .btn-diff:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 1px;
+}
+#screen-game .telemetry-scan-guide {
+  font-size: .65rem;
+  line-height: 1.35;
+  color: #8db1c8;
+  overflow-wrap: anywhere;
+  margin-top: 3px;
+}
+
+/* GridTwin v1.9: o mapa contém cargas; a lateral concentra informação preditiva. */
+#screen-game .telemetry-grid { gap:6px; }
+#screen-game .telemetry-zone {
+  min-height:62px; padding:7px 9px; gap:3px;
+  justify-content:center;
+}
+#screen-game .telemetry-readout { display:flex; align-items:center; }
+#screen-game .telemetry-risk {font-size:.65rem; letter-spacing:.04em;}
+#screen-game .telemetry-zone-head strong {font-size:.77rem;}
+#screen-game .telemetry-forecast {font-size:.66rem;line-height:1.3;}
+#screen-game .telemetry-explainer {font-size:.72rem;}
+#screen-game .scan-route-analysis[hidden] {display:none !important;}
+#screen-game .scan-route-analysis {
+  display:flex;flex-direction:column;gap:7px;
+  border:1px solid rgba(94,234,212,.6);background:rgba(5,31,43,.96);
+  padding:10px;border-radius:9px;min-width:0;overflow-wrap:anywhere;
+}
+#screen-game .scan-route-analysis > strong {font-size:.80rem;color:#79e0e1;letter-spacing:.025em;}
+#screen-game .scan-route-intro {font-size:.72rem;line-height:1.45;color:#c2dbe8;margin:0;}
+#screen-game .scan-route-hint {margin:0;padding:6px 8px;font-size:.74rem;line-height:1.4;color:#a0efd1;background:rgba(52,211,153,.09);border-radius:6px;}
+#screen-game .scan-route-rows {display:flex;flex-direction:column;gap:4px;}
+#screen-game .scan-route-row {display:flex;justify-content:space-between;gap:8px;align-items:baseline;background:#102638;padding:6px 8px;border-radius:5px;border-left:3px solid #5eead4;}
+#screen-game .scan-route-row strong {font-size:.74rem;color:#dceefa;flex:0 1 auto;}
+#screen-game .scan-route-row span {font-size:.69rem;text-align:right;color:#a8e5ce;flex:1 1 56%;}
+#screen-game .scan-route-row.warning {border-left-color:#ecc66a;}
+#screen-game .scan-route-row.warning span {color:#eed28e;}
+#screen-game .scan-route-row.danger,.scan-route-row.blocked {border-left-color:#ee8791;}
+#screen-game .scan-route-row.danger span,.scan-route-row.blocked span {color:#f1a4ac;}
+#screen-game .scan-route-row.unknown {border-left-color:#8b9cb4;}
+#screen-game .scan-route-row.unknown span {color:#b7c6d6;}
+#screen-game .scan-route-analysis small {font-size:.66rem;line-height:1.4;color:#8faac1;}
+@media(max-width:620px) {
+  #screen-game .telemetry-zone {min-height:65px;}
+  #screen-game .scan-route-row {flex-wrap:wrap;}
+  #screen-game .scan-route-row span {text-align:left;}
+}
+
+#screen-game .telemetry-forecast:empty {display:none;}
+
+/* Enquanto a varredura estiver ativa, mostrar o resultado antes do resumo de zonas.
+   A grade não desaparece: permanece acessível logo abaixo da análise. */
+#screen-game .game-sidebar.scan-open .telemetry-title-row {order:0;}
+#screen-game .game-sidebar.scan-open .storm-monitor {order:1;}
+#screen-game .game-sidebar.scan-open .dispatch-mission {order:2;}
+#screen-game .game-sidebar.scan-open .telemetry-focus {order:3;}
+#screen-game .game-sidebar.scan-open .telemetry-grid {order:4;}
+#screen-game .game-sidebar.scan-open .telemetry-explainer {order:5;}
+
+
+/* =====================================================================
+   GridTwin v2.0 — leitura em segundos: mapa + central de decisões.
+   ===================================================================== */
+#screen-game .decision-sidebar {
+  width:min(335px,30vw); flex:0 0 min(335px,30vw); min-width:265px;
+  align-self:flex-start; max-height:none; overflow:visible;
+  padding:13px; gap:10px;
+}
+#screen-game .decision-section { display:flex; flex-direction:column; gap:11px; min-height:0; overflow:visible; }
+#screen-game .decision-sidebar .sidebar-subtitle {font-size:1.2rem;line-height:1.2;}
+#screen-game .decision-priority {
+  padding:12px; display:flex; flex-direction:column; gap:8px;
+  background:rgba(7,35,50,.83); border:1px solid rgba(68,170,204,.55);
+  border-radius:9px;
+}
+#screen-game .decision-overline {font-size:.68rem;letter-spacing:.10em;font-weight:800;color:#84cfe8;}
+#screen-game .decision-priority .telemetry-focus-header strong {font-size:1.1rem;color:#f3fbff;}
+#screen-game .decision-priority .telemetry-focus-status {font-size:1.1rem;line-height:1.3;}
+#screen-game .decision-priority .telemetry-focus-detail {font-size:.79rem;line-height:1.45;margin:0;color:#c7deec;}
+#screen-game .decision-priority .telemetry-focus-action {font-size:.81rem;line-height:1.4;margin:0;padding-top:7px;color:#98e7e1;}
+#screen-game #telemetry-auto-focus {font-size:.7rem;}
+#screen-game .decision-scan {font-size:.8rem;line-height:1.4;color:#b9e6f1;padding:10px;border-radius:8px;border:1px dashed rgba(78,168,205,.5);}
+#screen-game .decision-sidebar .storm-monitor {padding:11px;font-size:.8rem;gap:4px;}
+#screen-game .decision-sidebar .events-details {flex:none;min-height:0;}
+#screen-game .zone-prediction {min-height:1.5em; font-weight:800;font-size:.77rem;line-height:1.25;}
+#screen-game .zone-prediction:empty {visibility:hidden;}
+#screen-game .zone-prediction.scan-risk-visible {color:#ffdd83;text-shadow:0 0 8px rgba(236,180,48,.35);}
+#screen-game .zone-prediction.scan-risk-critical {color:#ff8585;}
+#screen-game .game-zone-card {transition:border-color .15s,box-shadow .15s;}
+@media(max-width:1150px) {
+  #screen-game .decision-sidebar {width:min(300px,31vw);flex:0 0 min(300px,31vw);min-width:250px;}
+}
+@media(max-width:900px) {
+  #screen-game .decision-sidebar {width:100%;flex:none;max-width:none;min-width:0;}
+  #screen-game .decision-section {gap:8px;}
+}
+
+/* GridTwin 2.1 — novos comandos táticos e projeções do gêmeo digital */
+#screen-game .game-command-bar {flex-wrap:wrap;gap:7px;align-items:center;}
+#screen-game .game-command-bar .twin-action {font-size:.78rem;padding:9px 11px;white-space:nowrap;}
+#screen-game .twin-status-indicator {position:absolute;top:7px;left:7px;z-index:5;border:1px solid #65d7e8;background:#092635e8;color:#c7f8fb;border-radius:5px;padding:3px 6px;font-size:.62rem;font-weight:800;pointer-events:none;}
+#screen-game .twin-status-indicator.hidden {display:none;}
+#screen-game .twin-simulator {border:1px solid #47a5c2;border-radius:9px;background:#071d2cf2;padding:11px;display:flex;flex-direction:column;gap:9px;color:#d8f4ff;font-size:.83rem;}
+#screen-game .twin-simulator.hidden {display:none;}
+#screen-game .twin-scenarios {display:flex;flex-direction:column;gap:5px;}
+#screen-game .twin-scenario {display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 8px;background:#123344;border-radius:5px;}
+#screen-game .twin-scenario b {white-space:nowrap;}
+#screen-game .twin-scenario .danger {color:#ffa3a3;}
+#screen-game .twin-scenario .warning {color:#ffe29b;}
+#screen-game .twin-scenario .safe {color:#86f7d6;}
+#screen-game .twin-simulator small {color:#8ac0d0;line-height:1.4;}
+
+/* GridTwin 2.2 — console operacional de topologia */
+.network-operations{margin:12px 0 5px;border:1px solid rgba(78,181,220,.36);border-radius:10px;background:rgba(3,18,35,.84);padding:11px;color:#d7edfa;min-width:0}
+.network-ops-title{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:800;letter-spacing:.08em;color:#8fe6ff}
+.network-ops-title span{color:#d7edfa;letter-spacing:0;font-weight:500}
+.network-incident{margin:9px 0;padding:8px 10px;border:1px solid rgba(116,185,205,.22);border-radius:6px;font-size:12px;line-height:1.35;color:#aec6d5}
+.network-incident.incident-active{color:#ffd78c;border-color:rgba(255,185,67,.6);background:rgba(130,73,0,.13)}
+.network-lines{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.network-line{min-width:0;padding:8px 4px;cursor:pointer;border:1px solid #296579;border-radius:5px;background:rgba(10,77,94,.36);color:#9aebff;font:600 10px/1.2 inherit;white-space:nowrap}
+.network-line.line-open{border-color:#d19a62;background:rgba(123,65,18,.2);color:#ffcb93}
+.network-line:hover:not(:disabled){filter:brightness(1.4);border-color:#92e8ff}
+.network-line:disabled{opacity:.55;cursor:wait}
+.network-cooldown{font-size:11px;color:#acc8da;margin-top:7px}
+@media(max-width:650px){.network-lines{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v2.3: lateral informativo enxuto; previsoes legiveis no mapa */
+#screen-game .sensor-coverage {padding:8px 10px;border:1px solid rgba(70,168,202,.36);border-radius:7px;background:rgba(7,30,49,.9);font-size:.81rem;color:#b8e8ef}
+#screen-game .decision-section {gap:9px;}
+#screen-game .zone-prediction.scan-risk-visible {font-size:.84rem;font-weight:900;letter-spacing:.01em;color:#ffdc76;background:rgba(76,38,10,.72);border-radius:6px;padding:4px 5px;text-align:center;animation:scan-alert-breathe 1.5s ease-in-out infinite alternate;}
+@keyframes scan-alert-breathe {from{box-shadow:0 0 0 rgba(248,189,52,0)}to{box-shadow:0 0 13px rgba(248,189,52,.32)}}
+@media(max-width:850px){#screen-game .zone-prediction.scan-risk-visible {font-size:.72rem;padding:3px;}}
+
+/* GridTwin 2.4 — varredura precisa nos cartões e simulação com ações aplicáveis */
+#screen-game .zone-prediction.scan-risk-visible {
+  font-size:clamp(.69rem,.86vw,.85rem);
+  color:#ffe6a2;
+  background:rgba(62,42,10,.88);
+  border:1px solid rgba(255,194,93,.5);
+  padding:5px 4px;
+  font-weight:900;
+  letter-spacing:.015em;
+}
+#screen-game .zone-prediction.scan-risk-critical {
+  background:rgba(81,17,25,.80);
+  border:1px solid rgba(255,115,123,.67);
+  color:#ffe1e4;
+  border-radius:6px;
+  padding:5px 3px;
+  text-align:center;
+  font-weight:900;
+}
+#screen-game .zone-prediction.exact-prediction {box-shadow:inset 0 0 0 1px rgba(141,249,234,.25);}
+#screen-game .simulator-header {display:flex;justify-content:space-between;align-items:center;gap:8px;}
+#screen-game .simulator-header strong {color:#94eeff;font-size:.87rem;}
+#screen-game .simulator-close {border:1px solid #477789;border-radius:5px;background:#153b4b;color:#dbf7ff;cursor:pointer;padding:3px 8px;}
+#screen-game .simulator-intro,#screen-game .simulator-signal {margin:0;color:#c4e8f4;line-height:1.4;font-size:.74rem;}
+#screen-game .simulator-signal {color:#82dbcd;font-weight:700;}
+#screen-game .twin-scenario-interactive {display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:8px;align-items:center;}
+#screen-game .sim-scenario-copy,#screen-game .sim-outcome {display:flex;flex-direction:column;gap:3px;min-width:0;}
+#screen-game .sim-scenario-copy strong {font-size:.76rem;color:#f1fcff;overflow-wrap:anywhere;}
+#screen-game .sim-scenario-copy small,#screen-game .sim-outcome small {font-size:.63rem;color:#9ebfd0;}
+#screen-game .sim-outcome {align-items:flex-end;text-align:right;}
+#screen-game .sim-outcome b {font-size:.86rem;}
+#screen-game .sim-apply-action {padding:6px 7px;min-height:30px;border:1px solid #48cbb5;border-radius:5px;background:rgba(19,103,98,.4);color:#ddfff9;font-size:.68rem;font-weight:800;cursor:pointer;}
+#screen-game .sim-apply-action:disabled {opacity:.4;cursor:not-allowed;}
+#screen-game .sim-apply-action:not(:disabled):hover {filter:brightness(1.25);}
+#screen-game .simulator-note {font-size:.65rem;color:#8cbccb;line-height:1.35;}
+@media(max-width:1120px){#screen-game .twin-scenario-interactive {grid-template-columns:minmax(0,1fr) auto;}
+  #screen-game .sim-apply-action {grid-column:1/-1;width:100%;}}
+@media(max-width:850px){#screen-game .zone-prediction.scan-risk-visible,#screen-game .zone-prediction.scan-risk-critical {font-size:.66rem;padding:4px 2px;}}
+
+/* GridTwin 2.5 — crise instantânea e barra de comandos mais arejada */
+#screen-game .game-zone-card.instant-overload .zone-load-fill {
+  transition: none !important; /* O surto atinge 100% imediatamente */
+  width: 100% !important;
+  box-shadow: 0 0 14px rgba(255,70,80,.85);
+}
+#screen-game .game-zone-card.instant-overload .zone-load-bar {
+  border-color: #ff6976;
+}
+#screen-game .game-zone-card.instant-overload .zone-prediction {
+  border: 1px solid rgba(255,110,110,.85);
+  background: rgba(94,15,26,.85);
+  color: #ffe0e1;
+  border-radius: 6px;
+  padding: 5px 4px;
+  text-align: center;
+  font-weight: 900;
+}
+#screen-game .game-action-panel {
+  padding: 10px 14px 12px;
+}
+#screen-game .game-command-bar {
+  column-gap: 12px;
+  row-gap: 10px;
+  align-content:center;
+}
+#screen-game .game-command-bar > button,
+#screen-game .game-command-bar > .telemetry-panel {
+  flex: 0 0 auto;
+  margin: 0;
+}
+#screen-game .game-command-bar .grid-strategy-button,
+#screen-game .game-command-bar #btn-scan-system {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  line-height:1.35;
+  padding:9px 14px;
+}
+#screen-game .game-command-bar .shortcut-key {margin-left:2px;}
+#screen-game .command-help {
+  flex: 0 0 100%;
+  text-align:center;
+  line-height:1.85;
+  padding-top:5px;
+  border-top:1px solid rgba(100,185,213,.16);
+  white-space:normal;
+}
+#screen-game .sim-strategy-tip {
+  font-size:.65rem;
+  color:#a7dcff;
+  border:1px solid rgba(135,208,246,.4);
+  padding:4px 5px;
+  border-radius:5px;
+}
+@media(max-width:680px) {
+  #screen-game .game-command-bar {column-gap:8px;row-gap:8px;}
+  #screen-game .game-action-panel {padding:8px;}
+}
+
+/* Simulador: largura lateral de 335px; evitar botões comprimindo a leitura. */
+#screen-game .twin-scenario-interactive {
+  grid-template-columns:minmax(0,1fr) auto;
+  column-gap:8px;
+  row-gap:7px;
+}
+#screen-game .twin-scenario-interactive .sim-apply-action,
+#screen-game .twin-scenario-interactive .sim-strategy-tip {
+  grid-column:1 / -1;
+  justify-self:stretch;
+  text-align:center;
+  width:100%;
+}
+@media(max-width:900px) {
+  #screen-game .game-command-bar {
+    flex-direction:row;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  #screen-game .game-command-bar > button,
+  #screen-game .game-command-bar > .telemetry-panel {
+    flex:0 0 auto;
+    width:auto;
+    max-width:100%;
+  }
+  #screen-game .game-command-bar .grid-strategy-button,
+  #screen-game .game-command-bar #btn-scan-system {
+    min-height:35px;
+    padding:7px 10px;
+    font-size:.75rem;
+  }
+}
+@media(max-width:420px) {
+  #screen-game .game-action-panel {padding:6px 5px;}
+  #screen-game .game-command-bar {gap:6px;}
+  #screen-game .game-command-bar .grid-strategy-button,
+  #screen-game .game-command-bar #btn-scan-system {padding:6px 7px;font-size:.69rem;gap:4px;}
+  #screen-game .game-command-bar .shortcut-key {font-size:.63rem;padding:1px 3px;}
+}
+
+
+
+/* v2.7 — Ajustes exclusivamente na tela de orçamento. */
+#screen-preparation .prep-sidebar {
+  background: linear-gradient(160deg, rgba(10,30,47,.98), rgba(4,13,25,.97));
+  border: 1px solid rgba(68,178,210,.48);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(132,223,245,.08), 0 8px 24px rgba(0,0,0,.2);
+}
+#screen-preparation .prep-guide {display:flex;flex-direction:column;gap:15px;max-width:100%;}
+#screen-preparation .prep-guide-heading {padding-bottom:12px;border-bottom:1px solid rgba(84,186,218,.24);}
+#screen-preparation .prep-guide-eyebrow {display:block;font-family:monospace;font-size:.72rem;letter-spacing:.17em;color:#65d9f5;margin-bottom:5px;}
+#screen-preparation .prep-guide .sidebar-info-title {
+  font-size:clamp(1.4rem,2vw,1.8rem);line-height:1.12;color:#e9fbff;
+  border:0;padding:0;margin:0 0 8px;text-wrap:balance;
+}
+#screen-preparation .prep-guide .sidebar-intro {
+  margin:0;color:#b4cfdf;font-size:.82rem;line-height:1.45;text-align:left;
+}
+#screen-preparation .prep-guide .sidebar-intro strong {color:#facc15;}
+#screen-preparation .prep-guide-section {display:flex;flex-direction:column;gap:8px;}
+#screen-preparation .prep-guide-section-title {margin:0 0 2px;font-size:.71rem;font-weight:700;letter-spacing:.12em;color:#7adcf0;}
+#screen-preparation .prep-sensor-tier {
+  display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:9px;align-items:center;
+  border:1px solid rgba(82,151,179,.32);border-radius:8px;
+  background:rgba(14,43,64,.65);padding:10px 9px;
+}
+#screen-preparation .prep-tier-level {
+  display:grid;place-items:center;font-family:monospace;font-weight:700;font-size:.81rem;
+  border-radius:6px;background:rgba(31,125,163,.23);color:#78dcf1;min-height:32px;
+}
+#screen-preparation .prep-sensor-tier strong {display:block;color:#ecf9ff;font-size:.78rem;line-height:1.25;}
+#screen-preparation .prep-sensor-tier small {display:block;color:#9ebed1;font-size:.7rem;line-height:1.4;margin-top:2px;}
+#screen-preparation .prep-tier-cost {white-space:nowrap;color:#ffd580;font-family:monospace;font-size:.73rem;}
+#screen-preparation .prep-guide-objective {
+  border-left:3px solid #f0b83e;background:rgba(232,179,69,.07);
+  border-radius:4px 8px 8px 4px;padding:11px 12px;gap:7px;
+}
+#screen-preparation .prep-guide-objective .prep-guide-section-title {color:#f1c55e;}
+#screen-preparation .prep-guide-objective p {margin:0;color:#d0e3ef;font-size:.76rem;line-height:1.48;}
+#screen-preparation .prep-guide-objective strong {color:#fff;}
+#screen-preparation .prep-guide-objective kbd {font-family:monospace;background:#12354a;border:1px solid #477f9b;border-radius:3px;padding:0 4px;color:#d5f8ff;}
+#screen-preparation .prep-guide-footer {margin:0;color:#95b7ca;font-size:.72rem;line-height:1.4;text-align:center;}
+#screen-preparation .prep-guide-footer strong {color:#83dcec;}
+@media (max-width:760px) {
+  #screen-preparation .prep-guide {gap:12px;}
+  #screen-preparation .prep-sidebar {border-radius:10px;}
+}
+
+/* GridTwin v2.9 — orientação de rotas; sem alterações nas demais telas. */
+#screen-game .game-zone-card.redirect-origin-choice {outline:2px dashed rgba(91,221,245,.75);outline-offset:-2px;cursor:pointer;}
+#screen-game .game-zone-card.redirect-best {outline:3px solid #84f8bf;box-shadow:0 0 18px rgba(59,235,157,.28);}
+#screen-game .game-zone-card .redirect-preview {font-size:clamp(.61rem,.71vw,.75rem);line-height:1.32;padding:4px 6px;word-break:normal;overflow-wrap:break-word;}
+#screen-game .game-zone-card .redirect-preview-warning {background:rgba(111,72,14,.83);color:#ffe09c;}
+#screen-game #selection-hint:not(.hidden) {display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;font-size:.79rem;line-height:1.4;}
+#screen-game .redirect-fast-route {border:1px solid rgba(112,244,169,.8);background:rgba(13,72,54,.95);color:#c9ffe5;font:inherit;font-weight:800;border-radius:6px;padding:6px 10px;cursor:pointer;}
+#screen-game .redirect-fast-route:hover {background:rgba(20,113,77,.95);}
+
+/* v3.3 — destaque inequívoco da origem, dos destinos elegíveis e dos indisponíveis. */
+#screen-game .game-zone-card.selected-target {
+  outline: 3px solid #fbbf24;
+  outline-offset: -3px;
+  border-color: #fbbf24;
+  box-shadow: inset 0 0 0 1px rgba(251,191,36,.35), 0 0 22px rgba(251,191,36,.55);
+  opacity: 1;
+}
+#screen-game .game-zone-card.redirect-origin-choice {
+  outline: 2px dashed #67e8f9;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 12px rgba(34,211,238,.16);
+}
+#screen-game .game-zone-card.redirect-possible:not(.redirect-best) {
+  outline: 3px solid #22d3ee;
+  outline-offset: -3px;
+  border-color: #22d3ee;
+  box-shadow: 0 0 18px rgba(34,211,238,.43);
+  opacity: 1;
+  cursor: pointer;
+}
+#screen-game .game-zone-card.redirect-best {
+  outline: 3px solid #86efac;
+  outline-offset: -3px;
+  border-color: #86efac;
+  box-shadow: 0 0 20px rgba(134,239,172,.52);
+  opacity: 1;
+  cursor: pointer;
+}
+#screen-game .game-zone-card.redirect-unavailable:not(.selected-target) {
+  outline: 1px dashed rgba(148,163,184,.42);
+  outline-offset: -2px;
+  opacity: .48;
+  filter: grayscale(.45);
+}
+#screen-game .redirect-preview-origin {
+  background: rgba(146,91,12,.86);
+  color: #fff0bb;
+}
+#screen-game .redirect-preview-unavailable {
+  background: rgba(35,46,59,.88);
+  color: #cbd5e1;
+}
