@@ -169,12 +169,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const level = window.zoneLevels[zoneId];
             
             const zoneNames = {
-                1: "Zona 1",
-                2: "Zona 2",
-                3: "Zona 3",
-                4: "Zona 4",
-                5: "Zona 5",
-                6: "Zona 6"
+                1: "Zona 1 — Centro",
+                2: "Zona 2 — Porto",
+                3: "Zona 3 — Distrito Industrial",
+                4: "Zona 4 — Residencial Norte",
+                5: "Zona 5 — Hospital",
+                6: "Zona 6 — Aeroporto"
             };
             
             item.classList.remove('level-1', 'level-2');
@@ -362,7 +362,7 @@ const DIFFICULTY_SETTINGS = {
   },
   medium: {
     // Médio: crescimento moderadamente elevado em cada fase; recargas e surtos preservados.
-    growthPhases: [2.2, 3.3, 4.4],
+    growthPhases: [2.1, 3.1, 3.7],
     growthIntervalMs: 1500,
     cutCooldownMs: 1500,
     gracePeriodSec: 8,
@@ -400,12 +400,12 @@ const DIFFICULTY_LABELS = {
 };
 
 const ZONE_NAMES = {
-  1: "Zona 1",
-  2: "Zona 2",
-  3: "Zona 3",
-  4: "Zona 4",
-  5: "Zona 5",
-  6: "Zona 6"
+  1: "Zona 1 — Centro",
+  2: "Zona 2 — Porto",
+  3: "Zona 3 — Distrito Industrial",
+  4: "Zona 4 — Residencial Norte",
+  5: "Zona 5 — Hospital",
+  6: "Zona 6 — Aeroporto"
 };
 
 // Topologia simplificada da rede: conexões físicas entre setores.
@@ -598,7 +598,7 @@ function initScreen3() {
 
   if (gameState.growthIntervalTimer) clearInterval(gameState.growthIntervalTimer);
   if (gameState.difficulty === 'medium') {
-    // Apenas no Médio: +2,2/1,5s (0–20s), +3,3/s (20–80s), +4,4/s (80–120s).
+    // Apenas no Médio: +2,1/1,5s (0–20s), +3,1/s (20–80s), +4,1/s (80–120s).
     // Um relógio de 500ms mantém os períodos exatos sem alterar os outros modos.
     gameState.mediumGrowthAccumulatedMs = 0;
     gameState.growthIntervalTimer = setInterval(() => {
@@ -1216,7 +1216,7 @@ function projectMonitoredLoad(zoneId, addedLoad = 0) {
   for (let second = 1; second <= SCAN_HORIZON_SECONDS; second++) {
     const weatherZone = stormTargetAfter(second);
     const futureElapsed = 120 - gameState.timeRemaining + second;
-    const mediumGrowth = futureElapsed < 20 ? 2.2 : futureElapsed < 80 ? 3.3 : 4.4;
+    const mediumGrowth = futureElapsed < 20 ? 2.1 : futureElapsed < 80 ? 3.1 : 3.7;
     const hardGrowth = futureElapsed < 20 ? 2.9 : futureElapsed < 80 ? 4.1 : 5.3;
     const stepGrowth = gameState.difficulty === 'medium' ? mediumGrowth : gameState.difficulty === 'hard' ? hardGrowth : phaseGrowth;
     const stepInterval = gameState.difficulty === 'medium' ? (futureElapsed < 20 ? 1.5 : 1) : interval;
