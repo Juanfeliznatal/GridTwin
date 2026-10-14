@@ -1,4 +1,4 @@
-# GridTwin — versão 3.9
+# GridTwin
 
 ## Como abrir
 
