@@ -347,7 +347,7 @@ window.selectedDifficulty = window.selectedDifficulty || 'medium';
 // Configurações dos Modos com Sistema de Pontuação e Penalidades Escalonados
 const DIFFICULTY_SETTINGS = {
   easy: {
-    growthPhases: [0.50, 0.78, 1.00],
+    growthPhases: [1.0, 1.78, 2.10],
     growthIntervalMs: 1700,
     cutCooldownMs: 2500,
     gracePeriodSec: 12,
