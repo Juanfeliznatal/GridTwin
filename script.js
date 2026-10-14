@@ -1370,8 +1370,8 @@ function refreshRedirectGuidance() {
 function updateTacticalUI() {
   const now=Date.now();
   for(const [id,end,normal] of [
-    ['btn-fortify',gameState.shieldCooldownUntil,'🛡 Blindar · B'],
-    ['btn-repair',gameState.repairCooldownUntil,`🔧 Reparar (${gameState.maintenanceKits}) · M`]]) {
+    ['btn-fortify',gameState.shieldCooldownUntil,'🛡 Blindar · E'],
+    ['btn-repair',gameState.repairCooldownUntil,`🔧 Reparar (${gameState.maintenanceKits}) · T`]]) {
     const button=document.getElementById(id); if(!button)continue;
     const left=Math.max(0,Math.ceil(((end||0)-now)/1000));
     button.disabled=!!left || gameState.isAttentionBusy || gameState.isGameOver;
@@ -1400,9 +1400,9 @@ function setupGameEventListeners() {
     if (!gameScreen || gameScreen.classList.contains('hidden') || !gameState || gameState.isGameOver) return;
     const focused = e.target;
     if (focused && (focused.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(focused.tagName))) return;
-    if (!e.ctrlKey && !e.altKey && !e.metaKey && ['b','m'].includes(e.key.toLowerCase())) {
+    if (!e.ctrlKey && !e.altKey && !e.metaKey && ['e','t'].includes(e.key.toLowerCase())) {
       if(e.repeat) return;
-      const keyButtons = { b: 'btn-fortify', m: 'btn-repair' };
+      const keyButtons = { e: 'btn-fortify', t: 'btn-repair' };
       const actionButton = document.getElementById(keyButtons[e.key.toLowerCase()]);
       if(actionButton && !actionButton.disabled) actionButton.click();
       e.preventDefault(); return;
