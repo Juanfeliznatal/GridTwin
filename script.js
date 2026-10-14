@@ -347,7 +347,7 @@ window.selectedDifficulty = window.selectedDifficulty || 'medium';
 // Configurações dos Modos com Sistema de Pontuação e Penalidades Escalonados
 const DIFFICULTY_SETTINGS = {
   easy: {
-    growthPhases: [0.50, 0.78, 1.00],
+    growthPhases: [1.0, 1.5, 2.00],
     growthIntervalMs: 1700,
     cutCooldownMs: 2500,
     gracePeriodSec: 12,
@@ -362,7 +362,7 @@ const DIFFICULTY_SETTINGS = {
   },
   medium: {
     // Médio: crescimento moderadamente elevado em cada fase; recargas e surtos preservados.
-    growthPhases: [2.1, 3.1, 3.7],
+    growthPhases: [2.1, 3.1, 3.8],
     growthIntervalMs: 1500,
     cutCooldownMs: 1500,
     gracePeriodSec: 8,
@@ -378,7 +378,7 @@ const DIFFICULTY_SETTINGS = {
   hard: {
     // Difícil: crescimento moderadamente maior nas três fases.
     // Intervalos, recargas e demais regras permanecem inalterados.
-    growthPhases: [2.9, 4.1, 5.3],
+    growthPhases: [2.9, 3.9, 4.6],
     growthIntervalMs: 1000,
     cutCooldownMs: 1500,
     gracePeriodSec: 5,

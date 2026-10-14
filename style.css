@@ -1908,3 +1908,9 @@ ul.hidden {
   background: rgba(35,46,59,.88);
   color: #cbd5e1;
 }
+
+/* Ajuste pontual: manter os comandos da partida junto à borda inferior
+   quando houver espaço livre, sem sobrepor os cartões das zonas. */
+#screen-game .game-action-panel {
+    margin-top: auto;
+}
